@@ -97,6 +97,7 @@ into SDCC form, and the bitwise dialect now makes that translatable.
 2eca31c  add corpus measurement scripts: baseline and keil2sdcc effect
 16a8bb7  suppress spurious break warnings inside switch case bodies
 ab85b22  map C bitwise operators onto the new pseudocode dialect
+7a38ff2  transform break/continue into flag variables and loop conditions
 ```
 
 ### What's next
@@ -106,6 +107,18 @@ cToPseudocode.js now maps C's `& | ^ ~ << >>` and `&= |= ^= <<= >>=` onto
 `bitand bitor bitxor bitnot shiftleft shiftright`. SFR register setup stays
 silently filtered.
 
-**The next dialect decision is `break`/`continue`** — 12 files, 9 break-only, now
-the largest remaining category. The cost is a flag variable plus repeat-until per
-loop that uses break.
+**break/continue is now handled** — `if (cond) break;` at loop end folds into
+`REPEAT UNTIL cond` (exact, no warning); break-in-middle uses a flag variable
+with a guard on subsequent statements (warned as structural change).
+
+### Final numbers (three categories)
+
+| | count | of 515 |
+|---|---|---|
+| Translates directly (no restructuring) | **468** | **90.9%** |
+| Translates after restructuring (warned) | 8 | 1.6% |
+| **Total that translate** | **476** | **92.4%** |
+| Genuinely impossible | 39 | 7.6% |
+
+Remaining 39 failures: goto (3), pin computed value (16), parser crash on
+buggy C source (5), other overlap (15).
