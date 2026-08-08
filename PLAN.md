@@ -115,12 +115,12 @@ with a guard on subsequent statements (warned as structural change).
 
 | | count | of 515 |
 |---|---|---|
-| 1. Translates directly | **468** | **90.9%** |
-| 2. Translates after restructuring (warned) | 8 | 1.6% |
-| **── total that translate ──** | **476** | **92.4%** |
-| 3. Blocked by fixable defect | 36 | |
-| ····pin computed value (dialect gap) | 16 | next dialect decision |
-| ····unrecognised `for`-loop variant | 14 | more patterns to match |
-| ····parser crash (bug) | 5 | defects to chase |
-| ····other (parse edge case) | 1 | |
+| 1. Translates directly | **494** | **95.9%** |
+| 2. Translates after restructuring (warned) | 9 | 1.7% |
+| **── total that translate ──** | **503** | **97.7%** |
+| 3. Blocked by fixable defect | 9 | |
+| ····for-loop variant | 1 | |
+| ····parser crash (bug) | 4 | |
+| ····ternary (else branch dropped) | 3 | |
+| ····pin computed value | **0** | was 16 — dialect closed it |
 | 4. Genuinely impossible (`goto`) | **3** | **0.6%** |
