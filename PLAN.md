@@ -116,11 +116,12 @@ with a guard on subsequent statements (warned as structural change).
 | | count | of 515 |
 |---|---|---|
 | 1. Translates directly | **494** | **95.9%** |
-| 2. Translates after restructuring (warned) | 9 | 1.7% |
-| **── total that translate ──** | **503** | **97.7%** |
-| 3. Blocked by fixable defect | 9 | |
-| ····for-loop variant | 1 | |
-| ····parser crash (bug) | 4 | |
-| ····ternary (else branch dropped) | 3 | |
+| 2. Translates after restructuring (warned) | 10 | 1.9% |
+| **── total that translate ──** | **504** | **97.9%** |
+| 3. Remaining defects | 8 | |
+| ····parser crash (source bugs: `if(flag=1)`) | 3 | not our bug |
+| ····ternary (else branch dropped, warned) | 3 | honest, warned |
+| ····for-loop (string traversal, needs arrays) | 1 | needs array dialect |
+| ····encoding edge case | 1 | |
 | ····pin computed value | **0** | was 16 — dialect closed it |
 | 4. Genuinely impossible (`goto`) | **3** | **0.6%** |
