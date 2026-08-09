@@ -115,13 +115,22 @@ with a guard on subsequent statements (warned as structural change).
 
 | | count | of 515 |
 |---|---|---|
-| 1. Translates directly | **494** | **95.9%** |
+| 1. Translates directly | **502** | **96.4%** |
 | 2. Translates after restructuring (warned) | 10 | 1.9% |
-| **── total that translate ──** | **504** | **97.9%** |
-| 3. Remaining defects | 8 | |
-| ····parser crash (source bugs: `if(flag=1)`) | 3 | not our bug |
-| ····ternary (else branch dropped, warned) | 3 | honest, warned |
-| ····for-loop (string traversal, needs arrays) | 1 | needs array dialect |
-| ····encoding edge case | 1 | |
-| ····pin computed value | **0** | was 16 — dialect closed it |
+| **── total that translate ──** | **512** | **98.3%** |
+| 3. Remaining defects (characterised) | 6 | |
 | 4. Genuinely impossible (`goto`) | **3** | **0.6%** |
+
+### Characterisation of the 6 remaining defects
+
+1. **`带闹钟功能/…时钟.c`** — `if(UpdateTimeFlag=1)`: assignment-in-condition,
+   source bug (`=` instead of `==`). **Not our bug.**
+2. **`波形ROM/WaveForm_Rom.c`** — `if((fp = fopen(…)))`: assignment-in-condition
+   for file I/O. This is a desktop utility, not 8051 firmware. **Out of scope.**
+3. **`波形ROM/WaveForm_Rom.c.gbk.c`** — GBK re-encoding of #2. **Duplicate.**
+4. **`串口控制/main.c`** — `for(i=0; buzzc[i]!='\0'; i++)`: string-scanning
+   for-loop with array-dereference condition. **Needs array dialect (tier 2).**
+5. **`寻址/IIC.c`** — `lcdshow(0,0,(a==0?"y":"n"),1)`: ternary inside function
+   call argument. Would need hoisting to a temp variable. **Honest warning.**
+6. **`高精度PWM/main.c`** — `SetMotoangle(SWdir?angle++:angle--)`: ternary with
+   side effects inside a call. **Honest warning; restructuring would be fragile.**
