@@ -43,6 +43,26 @@ def test_version_reported():
     assert resp.version != "unknown"
 
 
+COOP = open(os.path.join(os.path.dirname(__file__), "coop_blink.c")).read()
+
+
+def test_cooperative_scheduler_compiles():
+    """The Duff's-device cooperative scheduler pattern compiles for AVR."""
+    req = CompileReq(code=COOP)
+    resp = compile_source(req)
+    assert resp.errors is None, f"Coop scheduler failed: {resp.errors}"
+    assert resp.hex is not None
+    assert resp.size and resp.size.get("text", 0) > 0
+    assert resp.fcpu == 16000000, f"F_CPU must be in the response: {resp.fcpu}"
+    print(f"  coop_blink: {resp.size['text']} bytes, fcpu={resp.fcpu}")
+
+
+def test_fcpu_in_response():
+    req = CompileReq(code=BLINK)
+    resp = compile_source(req)
+    assert resp.fcpu == 16000000, f"Expected 16 MHz, got {resp.fcpu}"
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):

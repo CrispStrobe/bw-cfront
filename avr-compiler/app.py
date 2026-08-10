@@ -58,6 +58,7 @@ BASE_FLAGS = [
     "-Os",                      # optimise for size
     "-std=gnu99",               # C99 + GNU extensions (AVR headers need them)
     "-Wall", "-Wextra",         # warnings
+    "-Wno-implicit-fallthrough", # Duff's-device cooperative scheduler uses deliberate fallthrough
     "-ffunction-sections",      # dead-code elimination
     "-fdata-sections",
     "-fno-exceptions",
@@ -130,6 +131,12 @@ def compile_source(req: CompileReq) -> CompileResp:
 
         with open(src_path, "w") as f:
             f.write(req.code)
+
+        # Copy the AVR runtime header so #include "avr_runtime.h" works
+        runtime_dir = os.path.join(os.path.dirname(__file__), "runtime")
+        if os.path.isdir(runtime_dir):
+            for rf in os.listdir(runtime_dir):
+                shutil.copy2(os.path.join(runtime_dir, rf), work)
 
         # ---- compile ----
         fcpu = target["fcpu"]
