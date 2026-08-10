@@ -46,9 +46,9 @@ except Exception:
 # ---- supported targets ----
 
 TARGETS = {
-    "atmega328p": {"mcu": "atmega328p", "flash": 32768, "ram": 2048},
-    "atmega168p": {"mcu": "atmega168p", "flash": 16384, "ram": 1024},
-    "atmega2560": {"mcu": "atmega2560", "flash": 262144, "ram": 8192},
+    "atmega328p": {"mcu": "atmega328p", "flash": 32768, "ram": 2048, "fcpu": 16000000},
+    "atmega168p": {"mcu": "atmega168p", "flash": 16384, "ram": 1024, "fcpu": 16000000},
+    "atmega2560": {"mcu": "atmega2560", "flash": 262144, "ram": 8192, "fcpu": 16000000},
 }
 DEFAULT_TARGET = "atmega328p"
 
@@ -84,6 +84,7 @@ class CompileResp(BaseModel):
     size: Optional[dict] = None     # { text, data, bss }
     version: str = AVR_GCC_VERSION
     target: str = DEFAULT_TARGET
+    fcpu: int = 16000000            # the F_CPU the hex was compiled with
 
 
 @app.get("/")
@@ -131,9 +132,11 @@ def compile_source(req: CompileReq) -> CompileResp:
             f.write(req.code)
 
         # ---- compile ----
+        fcpu = target["fcpu"]
         cmd = [
             AVR_GCC,
             f"-mmcu={target['mcu']}",
+            f"-DF_CPU={fcpu}UL",
             *BASE_FLAGS,
             "-Wa,-adhlns=" + lst_path,      # generate listing
             "-o", elf_path,
@@ -201,6 +204,7 @@ def compile_source(req: CompileReq) -> CompileResp:
             listing=lst_text,
             size=size_info,
             target=target_name,
+            fcpu=fcpu,
         )
 
     except subprocess.TimeoutExpired:
