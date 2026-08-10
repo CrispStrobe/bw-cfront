@@ -121,16 +121,22 @@ with a guard on subsequent statements (warned as structural change).
 | 3. Remaining defects (characterised) | 6 | |
 | 4. Genuinely impossible (`goto`) | **3** | **0.6%** |
 
-### Characterisation of the 6 remaining defects
+### The 6 remaining cases — why each does not translate
 
-1. **`带闹钟功能/…时钟.c`** — `if(UpdateTimeFlag=1)`: assignment-in-condition,
-   source bug (`=` instead of `==`). **Not our bug.**
-2. **`波形ROM/WaveForm_Rom.c`** — `if((fp = fopen(…)))`: assignment-in-condition
-   for file I/O. This is a desktop utility, not 8051 firmware. **Out of scope.**
-3. **`波形ROM/WaveForm_Rom.c.gbk.c`** — GBK re-encoding of #2. **Duplicate.**
-4. **`串口控制/main.c`** — `for(i=0; buzzc[i]!='\0'; i++)`: string-scanning
-   for-loop with array-dereference condition. **Needs array dialect (tier 2).**
-5. **`寻址/IIC.c`** — `lcdshow(0,0,(a==0?"y":"n"),1)`: ternary inside function
-   call argument. Would need hoisting to a temp variable. **Honest warning.**
-6. **`高精度PWM/main.c`** — `SetMotoangle(SWdir?angle++:angle--)`: ternary with
+Each is classified as one of three kinds:
+- **Source bug** — the C itself is wrong; the translator is correct to refuse.
+- **Dialect gap** — the construct is valid C but the pseudocode language has no
+  sentence for it. This is a feature request, not a parser bug.
+- **Architectural limit** — the construct is expressible in principle but the
+  translator's expression parser cannot propagate the information needed to
+  restructure it at the statement level.
+
+| # | file | construct | class | detail |
+|---|---|---|---|---|
+| 1 | `带闹钟…时钟.c` | `if(UpdateTimeFlag=1)` | **source bug** | `=` instead of `==`. The parser sees an assignment where it expects a condition and correctly refuses. The C is broken; fixing the translator to accept it would accept all assignments-in-conditions, which is a different language. |
+| 2 | `WaveForm_Rom.c` | `if((fp = fopen(…)))` | **out of scope** | Assignment-in-condition for file I/O (`fopen`, `FILE *`). This is a desktop utility (MSP430 waveform generator), not 8051 firmware. The construct itself (`fp = fopen(…)` as a condition) is valid C but has no pseudocode equivalent, and the program uses `stdio.h` which has no meaning on bare metal. |
+| 3 | `WaveForm_Rom.c.gbk.c` | same as #2 | **duplicate** | GBK re-encoding of the same file. Identical construct, identical reason. |
+| 4 | `串口控制/main.c` | `for(i=0; buzzc[i]!='\0'; i++)` | **dialect gap** | A for-loop whose condition dereferences an array (`buzzc[i]`). The loop walks a C string until the null terminator. The pseudocode dialect has `REPEAT N:` and `REPEAT UNTIL cond:` but no way to express array subscripts, so the condition cannot be translated. This is the same tier-2 gap as the cube's `frames[N][8]` lookup tables — it will be resolved when the array/table dialect lands. |
+| 5 | `寻址/IIC.c` | `lcdshow(0,0,(a==0?"y":"n"),1)` | **architectural limit** | A ternary `? :` inside a function call argument. The reader can expand `x = cond ? a : b` to `IF/ELSE` at the statement level (and does, since `3c424ac`), but a ternary nested inside a call argument would require hoisting to a temp variable, which needs ternary info to propagate out of the expression parser into statement-level code. Disproportionate to 1 file. The translator warns honestly rather than guessing. |
+| 6 | `高精度PWM/main.c` | `SetMotoangle(SWdir?angle++:angle--)` | **architectural limit** | Same class as #5 but harder: the ternary has side effects (`angle++` / `angle--`). Restructuring would require splitting the call into an if/else with duplicated call sites and separate increment/decrement. The translator warns. |
    side effects inside a call. **Honest warning; restructuring would be fragile.**
