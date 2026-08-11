@@ -139,4 +139,14 @@ Each is classified as one of three kinds:
 | 4 | `串口控制/main.c` | `for(i=0; buzzc[i]!='\0'; i++)` | **dialect gap** | A for-loop whose condition dereferences an array (`buzzc[i]`). The loop walks a C string until the null terminator. The pseudocode dialect has `REPEAT N:` and `REPEAT UNTIL cond:` but no way to express array subscripts, so the condition cannot be translated. This is the same tier-2 gap as the cube's `frames[N][8]` lookup tables — it will be resolved when the array/table dialect lands. |
 | 5 | `寻址/IIC.c` | `lcdshow(0,0,(a==0?"y":"n"),1)` | **architectural limit** | A ternary `? :` inside a function call argument. The reader can expand `x = cond ? a : b` to `IF/ELSE` at the statement level (and does, since `3c424ac`), but a ternary nested inside a call argument would require hoisting to a temp variable, which needs ternary info to propagate out of the expression parser into statement-level code. Disproportionate to 1 file. The translator warns honestly rather than guessing. |
 | 6 | `高精度PWM/main.c` | `SetMotoangle(SWdir?angle++:angle--)` | **architectural limit** | Same class as #5 but harder: the ternary has side effects (`angle++` / `angle--`). Restructuring would require splitting the call into an if/else with duplicated call sites and separate increment/decrement. The translator warns. |
-   side effects inside a call. **Honest warning; restructuring would be fragile.**
+
+### Summary: where the remaining 1.7% lives
+
+| class | cases | ours to fix? |
+|---|---|---|
+| **Source bug** (C is wrong) | 1, 2, 3 | no — the translator is correct to refuse |
+| **Dialect gap** (pseudocode has no sentence) | 4 | no — owned by sb3-creator (array/table dialect, tier 2). Filed as `spec-updates/array-subscript-dialect.md`. |
+| **Architectural limit** (expressible but disproportionate) | 5, 6 | ours in principle, but the fix (expression→statement hoisting) costs more than the 2 files it serves. Deliberately left as honest warnings. |
+
+Three are impossible (source bugs / out of scope). One is another repo's work.
+Two are ours but not worth the cost. None are translator bugs.
