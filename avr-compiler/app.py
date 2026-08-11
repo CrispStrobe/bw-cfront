@@ -86,6 +86,7 @@ class CompileResp(BaseModel):
     version: str = AVR_GCC_VERSION
     target: str = DEFAULT_TARGET
     fcpu: int = 16000000            # the F_CPU the hex was compiled with
+    source: str = "endpoint"        # always "endpoint" — a caller that compiled locally should set "local"
 
 
 @app.get("/")

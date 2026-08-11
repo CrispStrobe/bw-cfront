@@ -46,9 +46,37 @@ const resp = await fetch('http://127.0.0.1:8321/compile', {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ code: blinkSource, target: 'atmega328p' }),
 });
-const { hex, fcpu } = await resp.json();
+const { hex, fcpu, source } = await resp.json();
 // hex is Intel HEX text; fcpu is the clock the hex was compiled for
+// source is always "endpoint" — see below
 ```
+
+## Distinguishing endpoint from local compilation
+
+The response includes `"source": "endpoint"`. A caller that falls back to
+local `avr-gcc` should set `source` to `"local"` in its own result, so the
+test can assert which path produced the hex.
+
+The `version` field also distinguishes: the endpoint reports its pinned
+`avr-gcc (GCC) 7.3.0`; a local install may be a different version.
+
+## When the endpoint is absent
+
+**The contract's position: report loudly, do not hide it.**
+
+If the endpoint is unreachable (connection refused, timeout, DNS failure),
+the caller has three options:
+
+| option | when to use | what to say |
+|---|---|---|
+| **Fail the test** | CI that is meant to exercise the contract | `assert.fail('compile endpoint unreachable — the contract was not tested')` |
+| **Fall back to local and report** | Development, where local avr-gcc is available | log `"compile endpoint absent, using local avr-gcc"` and set `source: "local"` in the result |
+| **Skip the test** | CI without the service and without local avr-gcc | `{ skip: 'no compile endpoint and no local avr-gcc' }` |
+
+**The one thing a caller must NOT do: fall back silently.** A green suite
+that compiled locally while the contract went untested is the shape of every
+gate-that-passes-by-not-checking failure this project has caught. The
+fallback is reasonable; silence about it is not.
 
 ## What the endpoint does NOT do
 

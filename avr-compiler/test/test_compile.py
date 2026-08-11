@@ -63,6 +63,20 @@ def test_fcpu_in_response():
     assert resp.fcpu == 16000000, f"Expected 16 MHz, got {resp.fcpu}"
 
 
+def test_source_field_is_endpoint():
+    """The source field must say 'endpoint' so callers can distinguish from local."""
+    req = CompileReq(code=BLINK)
+    resp = compile_source(req)
+    assert resp.source == "endpoint", f"source should be 'endpoint', got '{resp.source}'"
+
+
+def test_source_field_on_error():
+    """Even on error, source is 'endpoint'."""
+    req = CompileReq(code="int main() { undeclared(); }")
+    resp = compile_source(req)
+    assert resp.source == "endpoint"
+
+
 def test_determinism_same_source_same_hex():
     """Same source + same flags + same compiler = byte-identical hex."""
     req = CompileReq(code=BLINK)
