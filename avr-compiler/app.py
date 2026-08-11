@@ -76,6 +76,7 @@ class CompileReq(BaseModel):
     code: str
     target: Optional[str] = None
     language: Optional[str] = "c"
+    symbols: Optional[bool] = False
 
 
 class CompileResp(BaseModel):
@@ -87,6 +88,8 @@ class CompileResp(BaseModel):
     target: str = DEFAULT_TARGET
     fcpu: int = 16000000            # the F_CPU the hex was compiled with
     source: str = "endpoint"        # always "endpoint" — a caller that compiled locally should set "local"
+    symbols: Optional[dict] = None  # symbol table: { name → { addr, type } } when requested
+    symbols_error: Optional[str] = None
 
 
 @app.get("/")
@@ -207,12 +210,23 @@ def compile_source(req: CompileReq) -> CompileResp:
                 target=target_name,
             )
 
+        # ---- symbols (debug info) ----
+        sym_table = None
+        sym_error = None
+        if req.symbols:
+            try:
+                sym_table = _extract_symbols(elf_path)
+            except Exception as e:
+                sym_error = str(e)
+
         return CompileResp(
             hex=hex_text,
             listing=lst_text,
             size=size_info,
             target=target_name,
             fcpu=fcpu,
+            symbols=sym_table,
+            symbols_error=sym_error,
         )
 
     except subprocess.TimeoutExpired:
@@ -247,3 +261,39 @@ def _parse_size(output: str) -> dict | None:
             except (IndexError, ValueError):
                 pass
     return info if info else None
+
+
+AVR_NM = os.environ.get("AVR_NM", shutil.which("avr-nm") or "avr-nm")
+
+# NM type codes → human-readable section names
+_NM_SECTIONS = {
+    "b": "bss", "B": "bss",
+    "d": "data", "D": "data",
+    "t": "text", "T": "text",
+    "r": "rodata", "R": "rodata",
+}
+
+
+def _extract_symbols(elf_path: str) -> dict:
+    """Run avr-nm on the ELF and return bw_* symbols with addresses.
+
+    Returns { "bw_ms": {"addr": 0x10c, "type": "bss"}, ... }
+    """
+    result = subprocess.run(
+        [AVR_NM, "--defined-only", elf_path],
+        capture_output=True, text=True, timeout=10,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(f"avr-nm failed: {result.stderr.strip()}")
+
+    symbols = {}
+    for line in result.stdout.splitlines():
+        parts = line.split()
+        if len(parts) != 3:
+            continue
+        addr_hex, typ, name = parts
+        if not name.startswith("bw_"):
+            continue
+        section = _NM_SECTIONS.get(typ, typ)
+        symbols[name] = {"addr": int(addr_hex, 16), "type": section}
+    return symbols
