@@ -95,6 +95,34 @@ rather than guessing. Deliberately left.
 
 ---
 
+## Licence — settled
+
+**MPL-2.0, owner-confirmed.** The owner was asked directly, given MPL-2.0, MIT and
+AGPL-3.0 as options with trade-offs, and chose MPL-2.0 explicitly for bw-cfront,
+bw-circuit-ui, bw-parts, bw-bundle and sb3-creator.
+
+Why MPL-2.0: requires attribution, keeps improvements to the licensed files open at
+file level, permits combination into a larger work under other terms, and section 3.3
+leaves the door open to GPL or AGPL later while the reverse would not. The specific
+trigger was sb3-creator's relicensing from AGPL-3.0 to MPL-2.0 — brickwright-lite
+vendors ten of its files into a BSD-3 tree, and AGPL anywhere in a bundle blocks
+app-store distribution.
+
+The licence files appeared in repos via direct ssh commit by the coordinator, which
+is why they arrived without explanation. That was a failure to announce, not an
+unsettled decision. Do not reopen it.
+
+**Repos that are NOT MPL-2.0** are constrained by upstream, not chosen:
+
+| repo | licence | why |
+|---|---|---|
+| ucsim-stc | GPL-2.0 | inherited from ucsim |
+| emu8051-stc | MIT | inherited from Jari Komppa |
+| brickwright-lite | BSD-3-Clause | inherited from upstream |
+| stc (lab) | MIT + Apache-2.0 NOTICE | MIT overall; Apache-2.0 notice for two derived examples |
+
+---
+
 ## Commits in this session
 
 ```
