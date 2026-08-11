@@ -63,6 +63,57 @@ def test_fcpu_in_response():
     assert resp.fcpu == 16000000, f"Expected 16 MHz, got {resp.fcpu}"
 
 
+def test_determinism_same_source_same_hex():
+    """Same source + same flags + same compiler = byte-identical hex."""
+    req = CompileReq(code=BLINK)
+    r1 = compile_source(req)
+    r2 = compile_source(req)
+    assert r1.hex == r2.hex, "Two compiles of the same source must produce identical hex"
+    assert r1.size == r2.size, "Size must match"
+    assert r1.version == r2.version, "Version must match"
+
+
+def test_determinism_no_date_time_leak():
+    """The hex and listing must not contain __DATE__ or __TIME__."""
+    import re
+    req = CompileReq(code=BLINK)
+    resp = compile_source(req)
+    # Check listing for date/time stamps that would break determinism
+    listing = resp.listing or ""
+    months = r"(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{1,2} \d{4}"
+    assert not re.search(months, listing), "Listing contains __DATE__"
+    times = r"\d{2}:\d{2}:\d{2}"
+    # avr-gcc version string has no time; check for stray timestamps
+    non_version = re.sub(r"GCC.*$", "", listing, flags=re.MULTILINE)
+    assert not re.search(times, non_version), "Listing contains __TIME__"
+
+
+def test_determinism_coop_scheduler():
+    """The cooperative scheduler also produces deterministic output."""
+    req = CompileReq(code=COOP)
+    r1 = compile_source(req)
+    r2 = compile_source(req)
+    assert r1.hex == r2.hex, "Coop scheduler: two compiles must be identical"
+
+
+def test_error_response_shape():
+    """A compile error returns errors string, null hex, and the target/version."""
+    req = CompileReq(code="int main() { undeclared_function(); }")
+    resp = compile_source(req)
+    # errors is a non-empty string
+    assert isinstance(resp.errors, str), f"errors should be str, got {type(resp.errors)}"
+    assert len(resp.errors) > 0, "errors should be non-empty"
+    # hex is None
+    assert resp.hex is None, "Failed compile should not return hex"
+    # listing is None (compilation didn't get that far)
+    assert resp.listing is None, "Failed compile should not return listing"
+    # target and version are still present
+    assert resp.target == "atmega328p"
+    assert resp.version != "unknown"
+    assert resp.fcpu == 16000000
+    print(f"  error shape: errors={resp.errors[:60]}...")
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):

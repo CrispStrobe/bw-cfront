@@ -52,7 +52,13 @@ EEPROM zeroed (0xFF), matching a freshly erased chip.
 
 ## 3. Compile flags
 
-Deterministic: same source + same flags = same hex, every time.
+**Deterministic: same source + same flags + same compiler version = same hex.**
+Tested: two calls with the same source produce byte-identical hex. No
+`__DATE__`, `__TIME__`, build-id or temp-path leaks into the output.
+
+The property is qualified by compiler version: the same source through a
+different avr-gcc is a different hex. The `version` field in the response
+pins which compiler produced it.
 
 ```
 avr-gcc -mmcu=atmega328p -DF_CPU=16000000UL -Os -std=gnu99
@@ -79,7 +85,40 @@ to produce working timing (delay loops depend on optimisation level).
 That test requires both sides running, and bw-board is frozen on the weekly
 limit.
 
-## 5. What the compile endpoint does NOT do
+## 5. Error response shape
+
+A compile error returns HTTP 200 with the error in the JSON body (not an
+HTTP error status). This matches the stc-compiler pattern.
+
+```json
+{
+    "hex": null,
+    "listing": null,
+    "errors": "main.c:1:14: error: implicit declaration of function 'undeclared'...",
+    "size": null,
+    "version": "avr-gcc (GCC) 7.3.0",
+    "target": "atmega328p",
+    "fcpu": 16000000
+}
+```
+
+| field | on success | on error |
+|---|---|---|
+| `hex` | Intel HEX text | `null` |
+| `listing` | assembly listing | `null` |
+| `errors` | `null` | compiler stderr (string) |
+| `size` | `{ text, data }` | `null` |
+| `version` | always present | always present |
+| `target` | always present | always present |
+| `fcpu` | always present | always present |
+
+**`errors` is the discriminator.** If `errors` is `null`, the compile
+succeeded and `hex` is present. If `errors` is a string, the compile
+failed and `hex` is `null`. There is no partial success — a warning
+without a hard error still produces hex (with the warning in `errors`
+being `null`; warnings appear in stderr but are not errors).
+
+## 6. What the compile endpoint does NOT do
 
 - **No Arduino library support.** This compiles bare AVR C (`avr/io.h`,
   `util/delay.h`). Arduino's `setup()`/`loop()` pattern and its libraries
