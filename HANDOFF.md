@@ -75,11 +75,10 @@ rather than guessing. Deliberately left.
 - **Vercel deployment**: avr-gcc may exceed free-tier function size. Never tested.
 - **Arduino library support**: bare `avr/io.h` + `util/delay.h` only. Adding Arduino
   core is a separate decision (LGPL-2.1, ~100KB source).
-- **Symbol extraction end-to-end test**: `_extract_symbols` is implemented (avr-nm,
-  filters to bw_* symbols, returns `{name: {addr, type}}`) but there is no test that
-  compiles a cooperative-scheduler program with `symbols: true` and asserts the response
-  contains `bw_task0_state` etc. The function works — it was validated manually against
-  avr-nm output — but the assertion is missing.
+- **Symbol extraction end-to-end test**: `_extract_symbols` now produces the full 004
+  format (scheduler.bw_ms, tasks[].state/until/yields with SRAM and code addresses),
+  validated manually against a two-task cooperative scheduler. No automated test yet
+  that compiles with `symbols: true` via the HTTP endpoint and asserts the response shape.
 
 ---
 
