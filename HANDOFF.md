@@ -71,6 +71,24 @@ through the rp2040js debug target: yield breakpoint on (bw_task0, 3) paused at
 pico04-button exercises the digital-input pad IE write landed in sb3-creator
 50d867e. Without that write, the SIO GPIO_IN bit reads 0 regardless of pin state.
 
+### 4. Retarget gallery integration (sb3-creator 4561724)
+
+`retargetPseudocode(src, device)` — one canonical source, every capable device.
+Gallery integration:
+
+- **index.json**: every generic program example gains computed `devices` (supported
+  targets) and `refusals` (human-readable reason strings per refused device).
+  29 examples annotated; refusals include "no ADC", "tone not ported", "more
+  digital outputs than convention offers", "8051 construct", etc.
+- **test/retarget-gallery.test.mjs** (184 tests):
+  - Computed device lists match live `retargetPseudocode` dry-run (29 tests)
+  - Every retarget result re-parses clean and generates C (153 tests)
+  - Golden fixture comparison: `retarget(01-blink, pico) ≈ pico01-blink`,
+    `retarget(01-blink, nano) ≈ nano01-blink` — same pins, same body (2 tests)
+
+Manual per-device examples (nano01-04, pico01-04) stay as golden fixtures.
+New generic examples need only one canonical source; the device filter is computed.
+
 ---
 
 ## What is NOT done
@@ -114,6 +132,7 @@ cf4b447  HANDOFF.md: record Nano examples landed in sb3-creator gallery
 
 ### sb3-creator (main)
 ```
+4561724  retarget gallery: computed device lists + golden fixture comparison
 b349d87  pico04-button: digital input example with pad IE verification
 7aab1bb  pico examples: 3 Raspberry Pi Pico gallery entries with live compile verification
 596b659  nano examples: 3 Arduino Nano gallery entries with live compile verification
