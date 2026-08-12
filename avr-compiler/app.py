@@ -370,7 +370,13 @@ def _scan_variables(source: str) -> list[dict]:
 def _line_addresses(elf_path: str) -> dict[int, int]:
     """Source line → code address from DWARF debug info.
 
-    Runs avr-objdump -d -l (disassembly with source lines interleaved).
+    Uses `avr-objdump -d -l` (disassembly with source lines interleaved),
+    NOT `--dwarf=decodedline`. The decodedline path returns zero rows on
+    binutils 2.26 even with DWARF-2 (avr-gcc 7.3.0's default), because
+    2.26's decoder does not handle the AVR line program. The -d -l path
+    works because the disassembler reads the DWARF through a different
+    code path (inline source annotation).
+
     Parses lines like "/path/to/main.c:42" followed by "  1a4: ..." to
     build {lineno: first_addr}. Keeps only the first address per line
     (matches stc_symtab convention).
