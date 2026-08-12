@@ -1,109 +1,71 @@
-# bw-cfront — session handoff (2026-08-12, updated)
+# bw-cfront — session handoff (2026-08-12)
 
-## What this repo is
+## What this session completed
 
-Three deliverables, all complete:
+### 1. Arduino Nano gallery examples (sb3-creator 596b659)
 
-1. **cToPseudocode.js** — C → pseudocode front end. Lives in sb3-creator,
-   developed here. Phase 1 (scheduler inversion) and Phase 2 (corpus-driven)
-   done. **512/515 corpus files translate (98.3%).** Six non-translating cases
-   fully classified (see below).
+Three examples in `sb3-creator/examples/`, wired into `index.json` with
+`"device": "arduino-nano"`:
 
-2. **avr-compiler/** — FastAPI endpoint wrapping avr-gcc. POST C source →
-   {hex, listing, size, version, fcpu, symbols}. The symbols path produces
-   the full 004-format debug table (same schema as stc_symtab.py).
+| id | what it exercises | compile |
+|---|---|---|
+| nano01-blink | `DEVICE ARDUINO-NANO`, D13 OUTPUT, 500ms blink | 320 bytes, no scheduler |
+| nano02-pot-print | A6 ANALOG (Nano-only pin), print every 1s | single-task, no scheduler |
+| nano03-two-tasks | two WHEN scripts (blink + print) | bw_task0 (4 yields), bw_task1 (3 yields) |
 
-3. **avr-examples/** — first wave of 6 Arduino UNO examples (see below).
+All verified against the live service (`stc-compiler.vercel.app/compile`,
+target `atmega328p`, `symbols: true`).
 
-4. **ARM compile endpoint** (stc-compiler) — `POST /compile` with
-   `target: "rp2040"`. Freestanding arm-none-eabi-gcc 8.3.1 behind the same
-   REST pattern as SDCC and AVR. SRAM-linked at 0x20000000 via custom linker
-   script. Returns raw binary + origin + entry. Symbols via objdump -t +
-   --dwarf=decodedline. Live at `stc-compiler.vercel.app` (verified via
-   /health: `arm_gcc: arm-none-eabi-gcc 8.3.1`).
+Gallery test (`test/gallery.test.mjs`): C round-trip skipped for AVR/Pico
+targets — `cToPseudocode` only reads STC12 C. Pattern:
+`/@bw device (arduino|atmega|pico|rp2040)/m`.
 
----
+### 2. ARM/RP2040 compile endpoint (stc-compiler ef749f2)
 
-## What was completed this session (2026-08-11 to 2026-08-12)
+`POST /compile` with `target: "rp2040"`. Freestanding arm-none-eabi-gcc 8.3.1
+behind the same REST pattern as SDCC and AVR.
 
-### Symbols endpoint — 004 format (bb917d3, eccd400)
+**Files in stc-compiler:**
+- `scripts/fetch-arm-gcc.sh` — builds the vendored bundle from Debian bullseye
+  packages. Trimmed to thumb/v6-m/nofp multilib only (Cortex-M0+). 82 MB.
+- `arm/` — the vendored bundle (committed, like `avr/`).
+- `pico-sram.ld` — linker script: `.text` at 0x20000000 (SRAM), `.text.startup*`
+  first so main lands at the origin under `-Os`.
+- `app.py` — `build_arm()`, `stage_arm()`, ARM target routing, /health.
+- `avr_symtab.py` — `data_vma_override` parameter (ARM = 0, no 0x800000 strip).
+- `test_arm_build.py` — 8 tests: compile, binary, entry/origin, disassembly,
+  symbols, toolchain fields, unknown target.
 
-`_extract_symbols` rewritten from a flat `{name: {addr, type}}` dict to the
-full 004 schema matching stc_symtab.py:
+**Response shape** (same as AVR, plus):
+- `origin`: 0x20000000 (SRAM load address)
+- `entry`: ELF entry point (0x20000001 with Thumb bit; must equal origin masked)
+- `base64`: raw binary (objcopy -O binary), NOT Intel HEX
+- `symbols`: same objdump -t + --dwarf=decodedline flow; `bw_ms` is OPTIONAL
+  (coordinator fix b7fac4a — RP2040 uses hardware TIMELR, no software counter)
 
-```json
-{
-  "fcpu": 16000000, "device": "atmega328p",
-  "scheduler": {
-    "bw_ms": {"space": "sram", "addr": 260, "size": 4},
-    "tasks": [{
-      "name": "bw_task0", "func_addr": 218,
-      "state": {"space": "sram", "addr": 258, "size": 2},
-      "until": {"space": "sram", "addr": 256, "size": 2},
-      "yields": [{"state": 0, "label": "loop_top", "addr": 240}, ...]
-    }]
-  }
-}
-```
+**Traps hit:**
+1. Tooldir layout: gcc configured with `--prefix=/usr/lib` looks for `as` at
+   `arm/lib/arm-none-eabi/bin/`, not `arm/arm-none-eabi/bin/`. Symlink covers both.
+2. `libisl.so.23`: ARM gcc 8.3.1 needs it (AVR gcc 5.4.0 does not). First deploy
+   showed BROKEN on /health; fixed by adding libisl23 to lib-deps.
+3. Thumb entry bit: ELF entry is 0x20000001 (bit 0 = Thumb). Masked for origin check.
+4. `-lgcc` required: bw_now does 64-bit division (__aeabi_uldivmod).
+5. `.text.startup*` must come first in linker script: under -Os, gcc places main in
+   `.text.startup.main`, not `.text.main`.
 
-Sources: `avr-nm` for SRAM + text addresses, `avr-objdump -d -l` for DWARF
-line→code-address mapping, C source scanning for `case` labels + `@bw yield`
-map + `@bw var` headers. Same drift check as stc_symtab: yield map must agree
-with case labels or it refuses.
+### 3. Pico gallery examples (sb3-creator 7aab1bb)
 
-**Key implementation details:**
-- SRAM addresses have `0x800000` AVR linker offset stripped (match avr8js data space)
-- Yield `addr` values are **byte** code addresses; avr8js PC is **word** = addr/2
-- `bw_ms` is 4 bytes (uint32_t on AVR), not 2 as on 8051
-- `case N:` labels generate no DWARF record; forward-scans up to 10 lines for the
-  first statement's address
-- Uses `avr-objdump -d -l`, NOT `--dwarf=decodedline` — the latter returns zero
-  rows on binutils 2.26 even with DWARF-2 (avr-gcc 7.3.0's default)
-- `-g` flag added to compile only when `symbols=true` (no effect on release builds)
+Three examples, same shape as the Nano set:
 
-Verified end-to-end through the HTTP endpoint (two-task cooperative scheduler).
+| id | what it exercises | compile |
+|---|---|---|
+| pico01-blink | `DEVICE PICO`, GP25 OUTPUT, 500ms blink | 708 bytes, single-task |
+| pico02-pot-print | GP26 ANALOG (ADC0), print every 1s | 1608 bytes, single-task |
+| pico03-two-tasks | two WHEN scripts (blink + print) | 1788 bytes, bw_task0+bw_task1, no bw_ms |
 
-### Integration gap closed (documented in AVR-COMPILE-CONTRACT.md)
-
-The coordinator proved the full chain (bw-board e715cf9):
-generateC → avr-gcc → parseIntelHex → avr8js → D13 blinks at 500ms, ADC reads 512 @ 2.5V.
-Contract updated from "NOT verified" to "verified" with the evidence.
-
-### AVR examples — first wave (20592ad)
-
-Six examples in `avr-examples/`, each with program.bw + circuit.json + EXPECTED.md:
-
-| id | what it exercises |
-|---|---|
-| avr01-blink | D13 at 1 Hz, active-high push-pull (opposite to STC12's active-low) |
-| avr02-dimmer | pot A0 → PWM brightness D9 |
-| avr03-dual-blink | two cooperative scripts, D13+D12 at different rates |
-| avr04-serial-pot | ADC print over USART0 (the onSerial path) |
-| avr05-button-led | digital input D2 with pull-down, LED on D13 |
-| avr06-blink-and-print | the exact pattern proven live: blink + serial ADC |
-
-These live here, not in sb3-creator. Ready to merge into sb3-creator/examples/
-when the index.json schema and gallery tests are extended for Arduino targets.
-
-### Handoff, licence, naming rule (3e72024, bb9da67)
-
-HANDOFF.md written with six-case classification and AVR endpoint state.
-MPL-2.0 recorded as owner-confirmed (saved to memory too).
-Naming rule saved to memory: no "competitor" in files/commits, keep attribution.
-
----
-
-## The six non-translating cases (longest half-life)
-
-| # | file | class | owner |
-|---|---|---|---|
-| 1 | `带闹钟…时钟.c` — `=` not `==` | source bug | nobody |
-| 2,3 | `WaveForm_Rom.c` — `fopen` assignment-in-condition | out of scope | nobody |
-| 4 | `串口控制/main.c` — `buzzc[i]` in for-loop condition | **dialect gap** | sb3-creator |
-| 5,6 | ternary inside call arg (2 files) | architectural limit | ours, not worth cost |
-
-**Case 4 is an open cross-repo request.** Filed as `spec-updates/array-subscript-dialect.md`.
-Needs `item i of buzzc` in the pseudocode dialect. **sb3-creator has not read it.**
+All verified against the live service. The coordinator verified pico03 end-to-end
+through the rp2040js debug target: yield breakpoint on (bw_task0, 3) paused at
+500 ms, PC on the symbol table's yield address.
 
 ---
 
@@ -111,13 +73,10 @@ Needs `item i of buzzc` in the pseudocode dialect. **sb3-creator has not read it
 
 | item | status | next step |
 |---|---|---|
-| Automated symbol extraction test | **test_arm_build.py** (8 tests) verifies RP2040 compile + symbols end-to-end locally. Live service verified for all 6 Nano+Pico examples. | AVR symbol test still TODO |
-| AVR examples in sb3-creator | **3 Arduino Nano examples landed** (596b659). All compile via live service. nano03 has full symbol table. | UNO examples (avr-examples/) still not in gallery |
-| Pico examples in sb3-creator | **3 Pico examples landed** (7aab1bb): pico01-blink (708B), pico02-pot-print (1608B), pico03-two-tasks (1788B, bw_task0+bw_task1, no bw_ms — hardware timer). All compile on live service. | done |
-| ARM compile endpoint | **Live** on stc-compiler.vercel.app (ef749f2). arm-none-eabi-gcc 8.3.1, 82 MB bundle. /health reports arm_gcc + arm_targets. | done |
-| Vercel deployment | **Working.** AVR (36 MB) + ARM (82 MB) + SDCC (8 MB) = 126 MB, under 250 MB limit. | done |
+| UNO examples in gallery | 6 examples in `avr-examples/` (bw-cfront), not in sb3-creator gallery | copy into sb3-creator/examples/, add to index.json with `"device": "arduino-uno"` |
+| AVR symbol extraction test | no pytest that POSTs a two-task AVR program and asserts response shape | write one modeled on test_arm_build.py |
 | Arduino library support | bare avr/io.h only | separate decision (LGPL-2.1 obligation) |
-| array-subscript-dialect.md unread | sb3-creator session hit limit before seeing it | next sb3-creator session should read spec-updates/ |
+| array-subscript-dialect.md | filed in spec-updates/, unread by sb3-creator | next sb3-creator session should read it |
 
 ---
 
@@ -125,33 +84,56 @@ Needs `item i of buzzc` in the pseudocode dialect. **sb3-creator has not read it
 
 | thing | reason |
 |---|---|
-| `--dwarf=decodedline` for line addresses | returns zero rows on binutils 2.26; `-d -l` works |
-| Expression→statement hoisting (ternary in call arg) | costs more than the 2 files it serves |
-| `goto` translation | genuinely impossible in structured blocks |
+| `--dwarf=decodedline` for AVR line addresses | returns zero rows on binutils 2.26; `-d -l` works |
 | Arduino library bundling | LGPL-2.1, ~100KB, separate decision |
+| Pico SDK | ~30 MB, CMake-based, LGPL runtime; codegen writes registers directly |
+| `thumb/nofp` multilib in ARM bundle | 22 MB duplicate; `-mcpu=cortex-m0plus` selects `thumb/v6-m/nofp` |
 
 ---
 
 ## Licence — settled, do not reopen
 
 **MPL-2.0, owner-confirmed** for bw-cfront, bw-circuit-ui, bw-parts, bw-bundle, sb3-creator.
-Why: file-level copyleft, combinable under other terms, §3.3 one-way to GPL/AGPL,
-AGPL-in-bundle blocks app-store distribution.
-
-Non-MPL repos are constrained by upstream: ucsim-stc (GPL-2), emu8051-stc (MIT),
+Non-MPL repos constrained by upstream: ucsim-stc (GPL-2), emu8051-stc (MIT),
 brickwright-lite (BSD-3), stc lab (MIT + Apache-2.0 NOTICE).
 
 ---
 
 ## All commits this session
 
+### bw-cfront (master)
 ```
-eccd400  app.py: document why -d -l, not --dwarf=decodedline
-20592ad  avr-examples: first wave — 6 Arduino UNO examples
-cd87431  AVR-COMPILE-CONTRACT.md: document symbols response and close integration gap
-2bbdedf  HANDOFF.md: update symbol extraction status after 004-format work
-bb917d3  avr-compiler: emit 004-format symbol table matching the 8051 path
-bb9da67  HANDOFF.md: record MPL-2.0 as owner-confirmed with reasoning
-3e72024  HANDOFF.md: six-case classification, AVR endpoint state, open dialect request
-14495a0  avr-compiler: add debug symbol extraction via avr-nm
+5339d11  HANDOFF.md: record Pico examples and ARM endpoint as done
+d30f69d  HANDOFF.md: record ARM compile endpoint live on stc-compiler
+cf4b447  HANDOFF.md: record Nano examples landed in sb3-creator gallery
 ```
+
+### sb3-creator (main)
+```
+7aab1bb  pico examples: 3 Raspberry Pi Pico gallery entries with live compile verification
+596b659  nano examples: 3 Arduino Nano gallery entries with live compile verification
+```
+
+### stc-compiler (main)
+```
+ef749f2  arm: add libisl23 to lib-deps
+a57dd29  test_arm_build: 8-test RP2040 end-to-end verification
+a11bf14  build_arm: RP2040 compile endpoint via arm-none-eabi-gcc
+83a1fdc  arm/: vendored ARM cross-toolchain bundle (thumb/v6-m only, 80 MB)
+3140add  fetch-arm-gcc.sh + pico-sram.ld: ARM toolchain and linker script
+```
+
+---
+
+## Key file locations for a fresh session
+
+- **ARM endpoint**: `stc-compiler/app.py` (`build_arm`, `stage_arm`, `ARM_TARGETS`)
+- **ARM linker script**: `stc-compiler/pico-sram.ld`
+- **ARM fetch script**: `stc-compiler/scripts/fetch-arm-gcc.sh`
+- **ARM symbol table**: `stc-compiler/avr_symtab.py` (shared with AVR, `data_vma_override=0`)
+- **ARM tests**: `stc-compiler/test_arm_build.py`
+- **Nano examples**: `sb3-creator/examples/nano01-blink/` etc.
+- **Pico examples**: `sb3-creator/examples/pico01-blink/` etc.
+- **Gallery test skip**: `sb3-creator/test/gallery.test.mjs` line 54, 70
+- **Live service**: `https://stc-compiler.vercel.app` (`/health`, `/compile`)
+- **Vercel size**: AVR (36 MB) + ARM (82 MB) + SDCC (8 MB) = 126 MB / 250 MB limit
