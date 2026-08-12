@@ -53,19 +53,23 @@ behind the same REST pattern as SDCC and AVR.
 5. `.text.startup*` must come first in linker script: under -Os, gcc places main in
    `.text.startup.main`, not `.text.main`.
 
-### 3. Pico gallery examples (sb3-creator 7aab1bb)
+### 3. Pico gallery examples (sb3-creator 7aab1bb → b349d87)
 
-Three examples, same shape as the Nano set:
+Four examples, same shape as the Nano set plus a digital-input leg:
 
 | id | what it exercises | compile |
 |---|---|---|
 | pico01-blink | `DEVICE PICO`, GP25 OUTPUT, 500ms blink | 708 bytes, single-task |
 | pico02-pot-print | GP26 ANALOG (ADC0), print every 1s | 1608 bytes, single-task |
 | pico03-two-tasks | two WHEN scripts (blink + print) | 1788 bytes, bw_task0+bw_task1, no bw_ms |
+| pico04-button | GP3 INPUT (pad IE+schmitt, 50d867e) + GP15 OUTPUT | 92 bytes, single-task, no symbols (correct) |
 
 All verified against the live service. The coordinator verified pico03 end-to-end
 through the rp2040js debug target: yield breakpoint on (bw_task0, 3) paused at
 500 ms, PC on the symbol table's yield address.
+
+pico04-button exercises the digital-input pad IE write landed in sb3-creator
+50d867e. Without that write, the SIO GPIO_IN bit reads 0 regardless of pin state.
 
 ---
 
@@ -110,6 +114,7 @@ cf4b447  HANDOFF.md: record Nano examples landed in sb3-creator gallery
 
 ### sb3-creator (main)
 ```
+b349d87  pico04-button: digital input example with pad IE verification
 7aab1bb  pico examples: 3 Raspberry Pi Pico gallery entries with live compile verification
 596b659  nano examples: 3 Arduino Nano gallery entries with live compile verification
 ```
