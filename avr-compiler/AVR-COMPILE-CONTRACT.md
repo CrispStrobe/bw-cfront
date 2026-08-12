@@ -76,14 +76,14 @@ to produce working timing (delay loops depend on optimisation level).
 | blink.c compiles to 176 bytes | **verified** | avr-gcc 7.3.0 on this box (category 3 — one implementation) |
 | The hex is valid Intel HEX | **verified** | starts with `:`, parses, correct checksums |
 | Error reporting works | **verified** | undeclared function → error in response |
-| The hex executes correctly under avr8js | **NOT verified** | the two halves have not been connected |
-| Timing matches F_CPU | **NOT verified** | requires avr8js running the hex at the declared clock |
+| The hex executes correctly under avr8js | **verified** | bw-board e715cf9: D13 blinks at 500ms edges, ADC reads 512 @ 2.5V |
+| Timing matches F_CPU | **verified** | same test: 500ms edges are exact under avr8js at 16 MHz |
 | Vercel deployment works | **NOT verified** | avr-gcc may exceed the free-tier function size |
 
-**The gap is the integration.** The compile endpoint produces a hex; avr8js
-(via bw-board's adapter) executes it. Nobody has fed one into the other.
-That test requires both sides running, and bw-board is frozen on the weekly
-limit.
+**The integration gap is closed.** bw-board `e715cf9` proved the chain
+end to end: `generateC` → this endpoint → `parseIntelHex` → avr8js → D13
+blinks at exact 500ms edges, ADC reads 512 at 2.5V over the new `onSerial`
+hook.
 
 ## 5. Error response shape
 
@@ -118,7 +118,70 @@ failed and `hex` is `null`. There is no partial success — a warning
 without a hard error still produces hex (with the warning in `errors`
 being `null`; warnings appear in stderr but are not errors).
 
-## 6. What the compile endpoint does NOT do
+## 6. Debug symbols (`symbols: true`)
+
+When the request includes `"symbols": true`, the response includes a `symbols`
+object in the same 004 format as `stc_symtab.py`:
+
+```json
+{
+  "symbols": {
+    "fcpu": 16000000,
+    "device": "atmega328p",
+    "scheduler": {
+      "bw_ms": {"space": "sram", "addr": 260, "size": 4},
+      "tasks": [{
+        "name": "bw_task0",
+        "func_addr": 218,
+        "state": {"space": "sram", "addr": 258, "size": 2},
+        "until": {"space": "sram", "addr": 256, "size": 2},
+        "yields": [
+          {"state": 0, "label": "loop_top", "addr": 240},
+          {"state": 1, "label": "loop_top", "addr": 248},
+          {"state": 2, "label": "wait",     "addr": 316}
+        ]
+      }]
+    }
+  }
+}
+```
+
+### Address conventions
+
+| address kind | what it is | consumer note |
+|---|---|---|
+| `scheduler.bw_ms.addr` | SRAM data-space address | read 4 bytes LE for `uint32_t` |
+| `tasks[].state.addr` | SRAM data-space address | read 2 bytes LE; `0xFFFF` = completed |
+| `tasks[].until.addr` | SRAM data-space address | read 2 bytes LE; ms timestamp |
+| `tasks[].func_addr` | flash **byte** address | text section entry point |
+| `yields[].addr` | flash **byte** address | avr8js PC = `addr / 2` (word address) |
+
+**SRAM addresses** are in the data address space (0x00–0x8FF for ATmega328P).
+The `0x800000` linker offset from `avr-nm` is already stripped. These are the
+same addresses avr8js uses for `readData()`.
+
+**Code addresses** are byte addresses. avr8js uses **word** addresses for the
+program counter (`cpu.pc`), so divide by 2 when setting yield breakpoints:
+`adapter.setBreakpoint({kind: 'code', addr: yield.addr / 2})`.
+
+### Differences from the 8051 path
+
+| | 8051 (stc_symtab) | AVR (this endpoint) |
+|---|---|---|
+| `bw_ms` size | 2 (uint16_t) | 4 (uint32_t) |
+| address space name | `"iram"` | `"sram"` |
+| code address source | SDCC `.cdb` line records | avr-gcc DWARF via `avr-objdump -d -l` |
+| code address unit | byte (8051 PC is byte) | byte (avr8js PC is **word** = byte/2) |
+| `@bw yield` map | same format | same format |
+
+### When symbols are absent
+
+A program without `bw_taskN` functions (single-WHEN, no cooperative scheduler)
+returns `symbols: null` with `symbols_error` explaining why. This is not an
+error — the image is valid, it simply has no Level 1 position to describe.
+The compile still succeeds; only the symbol table is absent.
+
+## 7. What the compile endpoint does NOT do
 
 - **No Arduino library support.** This compiles bare AVR C (`avr/io.h`,
   `util/delay.h`). Arduino's `setup()`/`loop()` pattern and its libraries
