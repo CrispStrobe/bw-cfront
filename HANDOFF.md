@@ -1,8 +1,8 @@
-# bw-cfront — session handoff (2026-08-12)
+# bw-cfront — session handoff (2026-08-12, updated)
 
 ## What this repo is
 
-Two deliverables, both complete:
+Three deliverables, all complete:
 
 1. **cToPseudocode.js** — C → pseudocode front end. Lives in sb3-creator,
    developed here. Phase 1 (scheduler inversion) and Phase 2 (corpus-driven)
@@ -14,6 +14,13 @@ Two deliverables, both complete:
    the full 004-format debug table (same schema as stc_symtab.py).
 
 3. **avr-examples/** — first wave of 6 Arduino UNO examples (see below).
+
+4. **ARM compile endpoint** (stc-compiler) — `POST /compile` with
+   `target: "rp2040"`. Freestanding arm-none-eabi-gcc 8.3.1 behind the same
+   REST pattern as SDCC and AVR. SRAM-linked at 0x20000000 via custom linker
+   script. Returns raw binary + origin + entry. Symbols via objdump -t +
+   --dwarf=decodedline. Live at `stc-compiler.vercel.app` (verified via
+   /health: `arm_gcc: arm-none-eabi-gcc 8.3.1`).
 
 ---
 
