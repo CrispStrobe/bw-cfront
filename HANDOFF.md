@@ -111,9 +111,11 @@ Needs `item i of buzzc` in the pseudocode dialect. **sb3-creator has not read it
 
 | item | status | next step |
 |---|---|---|
-| Automated symbol extraction test | no test compiles via HTTP with symbols:true and asserts the response shape | write a pytest that POSTs a two-task program, checks scheduler.tasks[0].yields has addr values |
-| AVR examples in sb3-creator | **3 Arduino Nano examples landed** (596b659): nano01-blink, nano02-pot-print, nano03-two-tasks. All compile via live service. nano03 has full symbol table (bw_task0 + bw_task1). Gallery test skips C round-trip for AVR targets. | UNO examples (avr-examples/) still not in gallery |
-| Vercel deployment | avr-gcc binary may exceed free-tier | test once, accept or switch to a VPS |
+| Automated symbol extraction test | **test_arm_build.py** (8 tests) verifies RP2040 compile + symbols end-to-end locally. Live service verified for all 6 Nano+Pico examples. | AVR symbol test still TODO |
+| AVR examples in sb3-creator | **3 Arduino Nano examples landed** (596b659). All compile via live service. nano03 has full symbol table. | UNO examples (avr-examples/) still not in gallery |
+| Pico examples in sb3-creator | **3 Pico examples landed** (7aab1bb): pico01-blink (708B), pico02-pot-print (1608B), pico03-two-tasks (1788B, bw_task0+bw_task1, no bw_ms — hardware timer). All compile on live service. | done |
+| ARM compile endpoint | **Live** on stc-compiler.vercel.app (ef749f2). arm-none-eabi-gcc 8.3.1, 82 MB bundle. /health reports arm_gcc + arm_targets. | done |
+| Vercel deployment | **Working.** AVR (36 MB) + ARM (82 MB) + SDCC (8 MB) = 126 MB, under 250 MB limit. | done |
 | Arduino library support | bare avr/io.h only | separate decision (LGPL-2.1 obligation) |
 | array-subscript-dialect.md unread | sb3-creator session hit limit before seeing it | next sb3-creator session should read spec-updates/ |
 
