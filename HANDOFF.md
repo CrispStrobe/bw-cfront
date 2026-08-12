@@ -105,7 +105,7 @@ Needs `item i of buzzc` in the pseudocode dialect. **sb3-creator has not read it
 | item | status | next step |
 |---|---|---|
 | Automated symbol extraction test | no test compiles via HTTP with symbols:true and asserts the response shape | write a pytest that POSTs a two-task program, checks scheduler.tasks[0].yields has addr values |
-| AVR examples in sb3-creator | examples are in bw-cfront/avr-examples, not in the gallery | merge into sb3-creator/examples/, extend index.json with `"device": "arduino-uno"`, update gallery tests |
+| AVR examples in sb3-creator | **3 Arduino Nano examples landed** (596b659): nano01-blink, nano02-pot-print, nano03-two-tasks. All compile via live service. nano03 has full symbol table (bw_task0 + bw_task1). Gallery test skips C round-trip for AVR targets. | UNO examples (avr-examples/) still not in gallery |
 | Vercel deployment | avr-gcc binary may exceed free-tier | test once, accept or switch to a VPS |
 | Arduino library support | bare avr/io.h only | separate decision (LGPL-2.1 obligation) |
 | array-subscript-dialect.md unread | sb3-creator session hit limit before seeing it | next sb3-creator session should read spec-updates/ |
