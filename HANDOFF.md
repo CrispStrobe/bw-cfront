@@ -1,134 +1,148 @@
-# bw-cfront — session handoff (2026-08-11)
+# bw-cfront — session handoff (2026-08-12)
 
-## What this repo contains
+## What this repo is
 
-Two things, in order of half-life:
+Two deliverables, both complete:
 
-1. **cToPseudocode.js** — the C-to-Brickwright-pseudocode front end, making the
-   C target two-way. Lives in sb3-creator but was developed and tested from here.
-   Phase 1 (cooperative-scheduler inversion) and Phase 2 (corpus-driven broadening)
-   are both done. **512 of 515 corpus files translate (98.3%).**
+1. **cToPseudocode.js** — C → pseudocode front end. Lives in sb3-creator,
+   developed here. Phase 1 (scheduler inversion) and Phase 2 (corpus-driven)
+   done. **512/515 corpus files translate (98.3%).** Six non-translating cases
+   fully classified (see below).
 
-2. **avr-compiler/** — a FastAPI endpoint that wraps avr-gcc. POST C source, get
-   back Intel HEX + listing + size + version + fcpu + optional symbols. Mirrors
-   the stc-compiler pattern.
+2. **avr-compiler/** — FastAPI endpoint wrapping avr-gcc. POST C source →
+   {hex, listing, size, version, fcpu, symbols}. The symbols path produces
+   the full 004-format debug table (same schema as stc_symtab.py).
 
----
-
-## The six non-translating cases and their classification
-
-This is the part with the longest half-life. 3 of 515 files do not translate, and
-none are translator bugs.
-
-| # | file | construct | class | owner |
-|---|---|---|---|---|
-| 1 | `带闹钟…时钟.c` | `if(UpdateTimeFlag=1)` — `=` not `==` | **source bug** | nobody (C is wrong) |
-| 2 | `WaveForm_Rom.c` | `if((fp = fopen(…)))` — assignment-in-condition | **out of scope** | nobody (desktop utility, not firmware) |
-| 3 | `WaveForm_Rom.c.gbk.c` | same as #2 | **duplicate** | nobody |
-| 4 | `串口控制/main.c` | `for(i=0; buzzc[i]!='\0'; i++)` — array subscript in condition | **dialect gap** | **sb3-creator / bw-blocks** |
-| 5 | `寻址/IIC.c` | `lcdshow(0,0,(a==0?"y":"n"),1)` — ternary inside call arg | **architectural limit** | ours, not worth the cost (1 file) |
-| 6 | `高精度PWM/main.c` | `SetMotoangle(SWdir?angle++:angle--)` — ternary with side effects in call arg | **architectural limit** | ours, not worth the cost (1 file) |
-
-**Cases 1-3**: the translator is correct to refuse. No action.
-
-**Case 4**: filed as `spec-updates/array-subscript-dialect.md`. Needs indexed table
-reads (`item i of buzzc`) in the pseudocode dialect. **This request has not been read
-by bw-blocks / sb3-creator.** The sb3-creator session hit its limit at 15:50 UTC on
-2026-08-11. This is an open cross-repo request with a named owner — do not let it
-depend on someone remembering it.
-
-**Cases 5-6**: expression-to-statement hoisting (ternary inside a function call
-argument). The fix requires propagating ternary info out of the expression parser
-into statement-level code generation, then splitting the call into an if/else with
-duplicated call sites. Disproportionate to 2 files. The translator warns honestly
-rather than guessing. Deliberately left.
+3. **avr-examples/** — first wave of 6 Arduino UNO examples (see below).
 
 ---
 
-## AVR compile endpoint — what exists and what does not
+## What was completed this session (2026-08-11 to 2026-08-12)
 
-### What exists
+### Symbols endpoint — 004 format (bb917d3, eccd400)
 
-- `app.py`: compiles C via avr-gcc, returns hex/listing/size/version/fcpu/symbols
-- `runtime/avr_runtime.h`: Timer0 CTC cooperative scheduler, same Duff's-device as STC12
-- `AVR-COMPILE-CONTRACT.md`: F_CPU is a contract between compiler and simulator
-- `CALLING.md`: recorded (not mocked) response, absence policy documented
+`_extract_symbols` rewritten from a flat `{name: {addr, type}}` dict to the
+full 004 schema matching stc_symtab.py:
 
-### Key decisions and their reasons
+```json
+{
+  "fcpu": 16000000, "device": "atmega328p",
+  "scheduler": {
+    "bw_ms": {"space": "sram", "addr": 260, "size": 4},
+    "tasks": [{
+      "name": "bw_task0", "func_addr": 218,
+      "state": {"space": "sram", "addr": 258, "size": 2},
+      "until": {"space": "sram", "addr": 256, "size": 2},
+      "yields": [{"state": 0, "label": "loop_top", "addr": 240}, ...]
+    }]
+  }
+}
+```
 
-- **Determinism claim qualified**: "same source + same flags + **same compiler version**
-  = same hex". Not just "same source = same hex". `__DATE__`/`__TIME__` are not used;
-  the qualification is the compiler version, which is pinned and reported.
-- **`errors` is the discriminator**: if `errors` is null the compile succeeded; if it is
-  a string the compile failed. No partial success. This matches stc-compiler.
-- **`fcpu` in the response**: the simulator reads it from the compile response, never
-  hard-codes it. Same contract shape as the STC12 1T/12T clock.
-- **`source: "endpoint"` vs `"local"`**: so tests can assert which path produced the hex.
-- **Absence policy**: report loudly, never fall back silently. A green suite that compiled
-  locally while the contract went untested is the shape of every gate-that-passes-by-not-
-  checking failure.
+Sources: `avr-nm` for SRAM + text addresses, `avr-objdump -d -l` for DWARF
+line→code-address mapping, C source scanning for `case` labels + `@bw yield`
+map + `@bw var` headers. Same drift check as stc_symtab: yield map must agree
+with case labels or it refuses.
 
-### What does NOT exist / is NOT verified
+**Key implementation details:**
+- SRAM addresses have `0x800000` AVR linker offset stripped (match avr8js data space)
+- Yield `addr` values are **byte** code addresses; avr8js PC is **word** = addr/2
+- `bw_ms` is 4 bytes (uint32_t on AVR), not 2 as on 8051
+- `case N:` labels generate no DWARF record; forward-scans up to 10 lines for the
+  first statement's address
+- Uses `avr-objdump -d -l`, NOT `--dwarf=decodedline` — the latter returns zero
+  rows on binutils 2.26 even with DWARF-2 (avr-gcc 7.3.0's default)
+- `-g` flag added to compile only when `symbols=true` (no effect on release builds)
 
-- **avr8js integration**: the hex has never been fed into avr8js. The two halves exist
-  separately. That test requires bw-board's adapter running.
-- **Vercel deployment**: avr-gcc may exceed free-tier function size. Never tested.
-- **Arduino library support**: bare `avr/io.h` + `util/delay.h` only. Adding Arduino
-  core is a separate decision (LGPL-2.1, ~100KB source).
-- **Symbol extraction end-to-end test**: `_extract_symbols` now produces the full 004
-  format (scheduler.bw_ms, tasks[].state/until/yields with SRAM and code addresses),
-  validated manually against a two-task cooperative scheduler. No automated test yet
-  that compiles with `symbols: true` via the HTTP endpoint and asserts the response shape.
+Verified end-to-end through the HTTP endpoint (two-task cooperative scheduler).
+
+### Integration gap closed (documented in AVR-COMPILE-CONTRACT.md)
+
+The coordinator proved the full chain (bw-board e715cf9):
+generateC → avr-gcc → parseIntelHex → avr8js → D13 blinks at 500ms, ADC reads 512 @ 2.5V.
+Contract updated from "NOT verified" to "verified" with the evidence.
+
+### AVR examples — first wave (20592ad)
+
+Six examples in `avr-examples/`, each with program.bw + circuit.json + EXPECTED.md:
+
+| id | what it exercises |
+|---|---|
+| avr01-blink | D13 at 1 Hz, active-high push-pull (opposite to STC12's active-low) |
+| avr02-dimmer | pot A0 → PWM brightness D9 |
+| avr03-dual-blink | two cooperative scripts, D13+D12 at different rates |
+| avr04-serial-pot | ADC print over USART0 (the onSerial path) |
+| avr05-button-led | digital input D2 with pull-down, LED on D13 |
+| avr06-blink-and-print | the exact pattern proven live: blink + serial ADC |
+
+These live here, not in sb3-creator. Ready to merge into sb3-creator/examples/
+when the index.json schema and gallery tests are extended for Arduino targets.
+
+### Handoff, licence, naming rule (3e72024, bb9da67)
+
+HANDOFF.md written with six-case classification and AVR endpoint state.
+MPL-2.0 recorded as owner-confirmed (saved to memory too).
+Naming rule saved to memory: no "competitor" in files/commits, keep attribution.
+
+---
+
+## The six non-translating cases (longest half-life)
+
+| # | file | class | owner |
+|---|---|---|---|
+| 1 | `带闹钟…时钟.c` — `=` not `==` | source bug | nobody |
+| 2,3 | `WaveForm_Rom.c` — `fopen` assignment-in-condition | out of scope | nobody |
+| 4 | `串口控制/main.c` — `buzzc[i]` in for-loop condition | **dialect gap** | sb3-creator |
+| 5,6 | ternary inside call arg (2 files) | architectural limit | ours, not worth cost |
+
+**Case 4 is an open cross-repo request.** Filed as `spec-updates/array-subscript-dialect.md`.
+Needs `item i of buzzc` in the pseudocode dialect. **sb3-creator has not read it.**
+
+---
+
+## What is NOT done
+
+| item | status | next step |
+|---|---|---|
+| Automated symbol extraction test | no test compiles via HTTP with symbols:true and asserts the response shape | write a pytest that POSTs a two-task program, checks scheduler.tasks[0].yields has addr values |
+| AVR examples in sb3-creator | examples are in bw-cfront/avr-examples, not in the gallery | merge into sb3-creator/examples/, extend index.json with `"device": "arduino-uno"`, update gallery tests |
+| Vercel deployment | avr-gcc binary may exceed free-tier | test once, accept or switch to a VPS |
+| Arduino library support | bare avr/io.h only | separate decision (LGPL-2.1 obligation) |
+| array-subscript-dialect.md unread | sb3-creator session hit limit before seeing it | next sb3-creator session should read spec-updates/ |
 
 ---
 
 ## What was ruled out and why
 
-| thing | why ruled out |
+| thing | reason |
 |---|---|
-| Expression→statement hoisting for ternary-in-call-arg | costs more than the 2 files it serves; translator warns honestly |
-| `goto` translation | genuinely impossible in structured blocks; 3 corpus files, correct to refuse |
-| Assignment-in-condition (`fp = fopen(…)`) | valid C but no pseudocode equivalent; out of scope (desktop utility) |
-| Arduino library bundling | LGPL-2.1 obligation, ~100KB, separate decision |
-| Inflating the translate rate by guessing | standing rule: a file that translates wrongly is worse than one that reports it cannot |
+| `--dwarf=decodedline` for line addresses | returns zero rows on binutils 2.26; `-d -l` works |
+| Expression→statement hoisting (ternary in call arg) | costs more than the 2 files it serves |
+| `goto` translation | genuinely impossible in structured blocks |
+| Arduino library bundling | LGPL-2.1, ~100KB, separate decision |
 
 ---
 
-## Licence — settled
+## Licence — settled, do not reopen
 
-**MPL-2.0, owner-confirmed.** The owner was asked directly, given MPL-2.0, MIT and
-AGPL-3.0 as options with trade-offs, and chose MPL-2.0 explicitly for bw-cfront,
-bw-circuit-ui, bw-parts, bw-bundle and sb3-creator.
+**MPL-2.0, owner-confirmed** for bw-cfront, bw-circuit-ui, bw-parts, bw-bundle, sb3-creator.
+Why: file-level copyleft, combinable under other terms, §3.3 one-way to GPL/AGPL,
+AGPL-in-bundle blocks app-store distribution.
 
-Why MPL-2.0: requires attribution, keeps improvements to the licensed files open at
-file level, permits combination into a larger work under other terms, and section 3.3
-leaves the door open to GPL or AGPL later while the reverse would not. The specific
-trigger was sb3-creator's relicensing from AGPL-3.0 to MPL-2.0 — brickwright-lite
-vendors ten of its files into a BSD-3 tree, and AGPL anywhere in a bundle blocks
-app-store distribution.
-
-The licence files appeared in repos via direct ssh commit by the coordinator, which
-is why they arrived without explanation. That was a failure to announce, not an
-unsettled decision. Do not reopen it.
-
-**Repos that are NOT MPL-2.0** are constrained by upstream, not chosen:
-
-| repo | licence | why |
-|---|---|---|
-| ucsim-stc | GPL-2.0 | inherited from ucsim |
-| emu8051-stc | MIT | inherited from Jari Komppa |
-| brickwright-lite | BSD-3-Clause | inherited from upstream |
-| stc (lab) | MIT + Apache-2.0 NOTICE | MIT overall; Apache-2.0 notice for two derived examples |
+Non-MPL repos are constrained by upstream: ucsim-stc (GPL-2), emu8051-stc (MIT),
+brickwright-lite (BSD-3), stc lab (MIT + Apache-2.0 NOTICE).
 
 ---
 
-## Commits in this session
+## All commits this session
 
 ```
+eccd400  app.py: document why -d -l, not --dwarf=decodedline
+20592ad  avr-examples: first wave — 6 Arduino UNO examples
+cd87431  AVR-COMPILE-CONTRACT.md: document symbols response and close integration gap
+2bbdedf  HANDOFF.md: update symbol extraction status after 004-format work
+bb917d3  avr-compiler: emit 004-format symbol table matching the 8051 path
+bb9da67  HANDOFF.md: record MPL-2.0 as owner-confirmed with reasoning
+3e72024  HANDOFF.md: six-case classification, AVR endpoint state, open dialect request
 14495a0  avr-compiler: add debug symbol extraction via avr-nm
-9da0fde  make compile path visible; document absence policy
-16202b3  characterise the six non-translating cases; file case 4 as spec-update
-bd80435  verify determinism, document error shape, qualify the claim
-3b0810f  avr-compiler: CALLING.md with recorded response — fcpu confirmed
-7b18dbe  avr-compiler: cooperative-scheduler variant + AVR runtime header
 ```
