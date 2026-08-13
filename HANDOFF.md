@@ -35,6 +35,21 @@ Three new constructs in the seeded corpus generator:
 Seed count raised from 100 → 200. All 400 parse+referee+generateC tests pass.
 20 sampled compile-on-live tests pass (no failures, no known-issue skips).
 
+### 18. Licensing adjudication: BASIC tab labels + attributions
+
+**UI labels fixed** (brickwright-lite f2a6a6c):
+- Tab: plain "BASIC" (was already correct)
+- Profile toggle: "BBC BASIC" / "6502 BASIC" (was "MS BASIC 1.1")
+- basicNote: describes "runs BBC BASIC (R.T. Russell, zlib) or 6502 BASIC
+  (derived from MIT-licensed source)" — describes, never brands
+- Reference panel: "6502 BASIC" throughout (was "MS BASIC 1.1")
+
+**Attributions added**:
+- brickwright-lite `THIRD-PARTY-NOTICES.md`: BBC BASIC (zlib, with BBC name
+  permission notice), 6502 BASIC as basic-m6502-bw (MIT), Acorn ROM and
+  ehBASIC explicitly listed as NOT shipped
+- sb3-creator `THIRD-PARTY-NOTICES.md` (ed4d99b): same dialect attributions
+
 ### 17. CI all green + deploys + production probes
 
 **CI status** (all green):
@@ -333,6 +348,7 @@ cf4b447  HANDOFF.md: record Nano examples landed in sb3-creator gallery
 
 ### brickwright-lite (main)
 ```
+f2a6a6c  licensing: BASIC tab labels + interpreter attributions per owner adjudication
 621d554  fix: replace curly quotes in JSX with straight quotes — babel parse error
 636a553  BASIC tab: generateBASIC view + basicToPseudocode import, two toggles
 c7b7626  vendor: Mega + 168P examples, sb3-creator device axes, extension tiles
@@ -342,6 +358,7 @@ d2af2e1  corpus-differential: env-gated CI test for oracle-differential sampling
 
 ### sb3-creator (main)
 ```
+ed4d99b  THIRD-PARTY-NOTICES: BBC BASIC (zlib) and 6502 BASIC (MIT) dialect attributions
 a27337f  corpus generator: add atmega168p + arduino-mega to device pool
 f9a47ed  mega + 168p gallery examples: blink, 16-ch ADC, 8-LED port walker
 d8c31f5  corpus generator: wait_until, repeat_until, PWM; 200 seeds all compile
