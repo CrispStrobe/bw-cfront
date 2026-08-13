@@ -35,6 +35,26 @@ Three new constructs in the seeded corpus generator:
 Seed count raised from 100 → 200. All 400 parse+referee+generateC tests pass.
 20 sampled compile-on-live tests pass (no failures, no known-issue skips).
 
+### 12. Mega + 168P gallery examples (sb3-creator f9a47ed)
+
+Four device-specific examples verified against the live compile service:
+
+| id | device | what it exercises | compile |
+|---|---|---|---|
+| mega01-blink | arduino-mega | D13 OUTPUT, 500ms blink | 1711 bytes |
+| mega02-adc-print | arduino-mega | A9 ANALOG (Mega-only, ADC ch 9), print 1s | 2263 bytes |
+| mega03-port-current | arduino-mega | D22-D29 (port A), 8 LEDs, 200ms walk | 2803 bytes |
+| 168p01-blink | atmega168p | D13 OUTPUT, 500ms blink | 1351 bytes |
+
+Gallery index grows to 127 entries. All 810 sb3-creator tests pass.
+
+### 13. Re-vendor gallery into lite (brickwright-lite c7b7626)
+
+Re-ran `sync-examples.mjs` to pick up the 4 new examples and updated device
+lists (127 entries, 28 with computed devices). Also vendored sb3-creator
+b999a80 changes (ATMEGA168P + ARDUINO-MEGA device axes) and the corresponding
+extension library tiles. All 116 lite tests pass.
+
 ### 11. AVR family widening: ATmega2560 + ATtiny85 (stc-compiler 927f806, d005bd6)
 
 Extended the hosted avr-gcc bundle with two new multilib families:
@@ -240,12 +260,14 @@ cf4b447  HANDOFF.md: record Nano examples landed in sb3-creator gallery
 
 ### brickwright-lite (main)
 ```
+c7b7626  vendor: Mega + 168P examples, sb3-creator device axes, extension tiles
 d2af2e1  corpus-differential: env-gated CI test for oracle-differential sampling
 103676b  sync-examples: vendor gallery from sb3-creator with devices + refusals
 ```
 
 ### sb3-creator (main)
 ```
+f9a47ed  mega + 168p gallery examples: blink, 16-ch ADC, 8-LED port walker
 d8c31f5  corpus generator: wait_until, repeat_until, PWM; 200 seeds all compile
 fd48678  arduino-import: 21 built-in examples through cToPseudocode + referee
 87ee760  property-based corpus generator: seeded dialect grammar, 100 seeds
