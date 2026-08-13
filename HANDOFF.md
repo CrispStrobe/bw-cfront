@@ -1,4 +1,4 @@
-# bw-cfront — session handoff (2026-08-12)
+# bw-cfront — session handoff (2026-08-13)
 
 ## What this session completed
 
@@ -89,6 +89,39 @@ Gallery integration:
 Manual per-device examples (nano01-04, pico01-04) stay as golden fixtures.
 New generic examples need only one canonical source; the device filter is computed.
 
+### 5. Retarget amplification harness (sb3-creator 82e3ecf)
+
+Every gallery example × every device in its computed devices list: retarget,
+parse, referee-trace via `interpretTrace`. 179 test assertions.
+
+- **Tier 1**: 109 of 155 program-runs produce clean traces. 46 use opcodes
+  the referee doesn't speak yet (`control_wait_until`, `control_repeat_until`,
+  `devices_setservo`, `devices_setmotor`, `stc12_setpart`).
+- **Tier 2**: cross-device trace identity. 81 of 89 pair comparisons match
+  exactly. 4 exceptions: examples where ADC-derived values flow through
+  polarity-aware writes (STC12 ACTIVE LOW vs Pico active-high — both correct).
+
+### 6. Property-based corpus generator (sb3-creator 87ee760)
+
+Seeded generator over the dialect grammar (mulberry32 PRNG). Generates 1-3
+task programs per seed with bounded nests (≤3 deep), IF/REPEAT/FOREVER, pin
+ops from the device's own pool, variables, arithmetic, analog reads.
+
+- 100 seeds × parse + referee: all clean
+- 100 seeds × generateC: all clean
+- COMPILE_TEST=1: 20 seeds against live service; 15 compile, 5 hit known
+  `bw_print_num` implicit-declaration gap on 8051 (recorded, not failure)
+
+### 7. Arduino built-in examples import (sb3-creator fd48678)
+
+21 examples from arduino/arduino-examples (CC0-1.0) through cToPseudocode.
+Categories 01.Basics, 02.Digital, 03.Analog.
+
+- 18 of 21 re-parse clean; 3 trace with pin events
+- Importer warnings recorded as `.warnings.json` fixtures — the reader
+  correctly refuses Serial.begin, arrays, computed pin names, float arithmetic
+- corpus/arduino-examples/ and corpus/arduino-imported/ are gitignored
+
 ---
 
 ## What is NOT done
@@ -125,6 +158,8 @@ brickwright-lite (BSD-3), stc lab (MIT + Apache-2.0 NOTICE).
 
 ### bw-cfront (master)
 ```
+602f3ef  HANDOFF.md: record retarget gallery integration
+9c8bcf1  HANDOFF.md: record pico04-button digital input example
 5339d11  HANDOFF.md: record Pico examples and ARM endpoint as done
 d30f69d  HANDOFF.md: record ARM compile endpoint live on stc-compiler
 cf4b447  HANDOFF.md: record Nano examples landed in sb3-creator gallery
@@ -132,6 +167,9 @@ cf4b447  HANDOFF.md: record Nano examples landed in sb3-creator gallery
 
 ### sb3-creator (main)
 ```
+fd48678  arduino-import: 21 built-in examples through cToPseudocode + referee
+87ee760  property-based corpus generator: seeded dialect grammar, 100 seeds
+82e3ecf  retarget amplification harness: 155 program×device traces via the referee
 4561724  retarget gallery: computed device lists + golden fixture comparison
 b349d87  pico04-button: digital input example with pad IE verification
 7aab1bb  pico examples: 3 Raspberry Pi Pico gallery entries with live compile verification
