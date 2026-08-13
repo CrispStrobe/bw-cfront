@@ -317,6 +317,7 @@ cf4b447  HANDOFF.md: record Nano examples landed in sb3-creator gallery
 
 ### brickwright-lite (main)
 ```
+621d554  fix: replace curly quotes in JSX with straight quotes — babel parse error
 636a553  BASIC tab: generateBASIC view + basicToPseudocode import, two toggles
 c7b7626  vendor: Mega + 168P examples, sb3-creator device axes, extension tiles
 d2af2e1  corpus-differential: env-gated CI test for oracle-differential sampling
