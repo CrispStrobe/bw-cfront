@@ -35,6 +35,19 @@ Three new constructs in the seeded corpus generator:
 Seed count raised from 100 → 200. All 400 parse+referee+generateC tests pass.
 20 sampled compile-on-live tests pass (no failures, no known-issue skips).
 
+### 11. AVR family widening: ATmega2560 + ATtiny85 (stc-compiler 927f806, d005bd6)
+
+Extended the hosted avr-gcc bundle with two new multilib families:
+
+- **avr6**: ATmega2560 (256 KB flash, Arduino Mega) — `PORTB PB7` blink verified
+- **avr25**: ATtiny85 (8 KB flash, no UART) + ATtiny84 — `PORTB PB3` blink verified
+
+`fetch-avr-gcc.sh` now pulls avr5+avr6+avr25 and trims device-specific CRT/lib
+files to only the parts in `AVR_TARGETS`. Bundle: 39 MB (was 36 MB; net +3 MB).
+Both targets compile, produce non-empty hex, have DWARF line info, and pass
+the symbols path. 10 new tests in `test_avr_widening.py`, all pass alongside
+the existing 17. `/health` lists `atmega2560` and `attiny85` in `avr_targets`.
+
 ### 1. Arduino Nano gallery examples (sb3-creator 596b659)
 
 Three examples in `sb3-creator/examples/`, wired into `index.json` with
@@ -245,6 +258,8 @@ b349d87  pico04-button: digital input example with pad IE verification
 
 ### stc-compiler (main)
 ```
+d005bd6  avr widening: ATmega2560 + ATtiny85 compile targets with 10-test verification
+927f806  avr: add avr6 (ATmega2560) and avr25 (ATtiny85/84) multilibs, trim device libs
 ef749f2  arm: add libisl23 to lib-deps
 a57dd29  test_arm_build: 8-test RP2040 end-to-end verification
 a11bf14  build_arm: RP2040 compile endpoint via arm-none-eabi-gcc
@@ -261,6 +276,10 @@ a11bf14  build_arm: RP2040 compile endpoint via arm-none-eabi-gcc
 - **ARM fetch script**: `stc-compiler/scripts/fetch-arm-gcc.sh`
 - **ARM symbol table**: `stc-compiler/avr_symtab.py` (shared with AVR, `data_vma_override=0`)
 - **ARM tests**: `stc-compiler/test_arm_build.py`
+- **AVR widening tests**: `stc-compiler/test_avr_widening.py` (ATmega2560 + ATtiny85)
+- **AVR fetch script**: `stc-compiler/scripts/fetch-avr-gcc.sh` (MULTILIBS, DEVICE_HEADERS, DEVICE_LIBS)
+- **Lite sync-examples**: `brickwright-lite/scripts/sync-examples.mjs`
+- **Lite corpus-diff test**: `brickwright-lite/test/corpus-differential.test.mjs` (CORPUS_DIFFERENTIAL=1)
 - **Nano examples**: `sb3-creator/examples/nano01-blink/` etc.
 - **Pico examples**: `sb3-creator/examples/pico01-blink/` etc.
 - **Gallery test skip**: `sb3-creator/test/gallery.test.mjs` line 54, 70
