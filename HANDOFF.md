@@ -35,6 +35,22 @@ Three new constructs in the seeded corpus generator:
 Seed count raised from 100 → 200. All 400 parse+referee+generateC tests pass.
 20 sampled compile-on-live tests pass (no failures, no known-issue skips).
 
+### 17. CI all green + deploys + production probes
+
+**CI status** (all green):
+- sb3-creator: green (f54cc81)
+- brickwright-lite: green (621d554) — curly-quote JSX fix was needed
+- stc-compiler: green (d005bd6)
+- emu8051-stc: green
+
+**Deploys:**
+- GH Pages: https://crispstrobe.github.io/brickwright-lite/ — deployed 2026-08-13T21:40:15Z
+- Vercel: https://stc-compiler.vercel.app — d005bd6, ok
+
+**Production probes** (`proof-production.mjs`):
+- **Nano**: 5/5 PASS (positionLive, ledBlinks, serialVisible, pauseFrozen, stepMoves)
+- **Pico**: 4/5 PASS — `ledBlinks` FAIL (pre-existing: shadow-DOM glow detection flaky on headless Chromium; NOT caused by the BASIC tab)
+
 ### 16. BASIC tab in the bundle app (brickwright-lite 636a553)
 
 Fifth language tab in the Code pane: BBC BASIC / MS BASIC 1.1.
