@@ -2,6 +2,39 @@
 
 ## What this session completed
 
+### 8. Gallery vendoring into lite (brickwright-lite 103676b)
+
+New `scripts/sync-examples.mjs` in brickwright-lite follows the house vendor
+discipline (complete tree or fail before writing; `--dir` for local; `--check`
+for CI). Vendors sb3-creator's `examples/` into `overlay/scratch-gui/examples/`
+which `integrate.mjs` copies to `packages/`.
+
+What it brings:
+- **`devices` and `refusals` fields** in `index.json` — the ExamplesBrowser
+  uses these to grey out incompatible examples per device. 29 program examples
+  annotated with computed device lists; 11 have refusal reasons.
+- **pico04-button** example (digital input with pad IE).
+- `npm run sync:examples` / `sync:examples:check` wired in `package.json`.
+
+All 116 lite tests pass (115 + 1 skipped corpus-differential).
+
+### 9. Corpus-differential CI sampling (brickwright-lite d2af2e1)
+
+New `test/corpus-differential.test.mjs`: env-gated (`CORPUS_DIFFERENTIAL=1`),
+runs `oracle-differential.mjs corpus` with 6 pairs per run, offset rotating by
+day-of-year. Default off — requires network (hosted compile service). Skips
+cleanly in the default test suite.
+
+### 10. Generator seeds coverage expansion (sb3-creator d8c31f5)
+
+Three new constructs in the seeded corpus generator:
+- `wait until <condition>` (56/200 seeds exercise it)
+- `REPEAT UNTIL <condition>:` (61/200 seeds)
+- `set <pin> to <n> percent` — PWM duty cycle (27/200 seeds, 41 with PWM pins)
+
+Seed count raised from 100 → 200. All 400 parse+referee+generateC tests pass.
+20 sampled compile-on-live tests pass (no failures, no known-issue skips).
+
 ### 1. Arduino Nano gallery examples (sb3-creator 596b659)
 
 Three examples in `sb3-creator/examples/`, wired into `index.json` with
@@ -192,8 +225,15 @@ d30f69d  HANDOFF.md: record ARM compile endpoint live on stc-compiler
 cf4b447  HANDOFF.md: record Nano examples landed in sb3-creator gallery
 ```
 
+### brickwright-lite (main)
+```
+d2af2e1  corpus-differential: env-gated CI test for oracle-differential sampling
+103676b  sync-examples: vendor gallery from sb3-creator with devices + refusals
+```
+
 ### sb3-creator (main)
 ```
+d8c31f5  corpus generator: wait_until, repeat_until, PWM; 200 seeds all compile
 fd48678  arduino-import: 21 built-in examples through cToPseudocode + referee
 87ee760  property-based corpus generator: seeded dialect grammar, 100 seeds
 82e3ecf  retarget amplification harness: 155 program×device traces via the referee
