@@ -35,6 +35,26 @@ Three new constructs in the seeded corpus generator:
 Seed count raised from 100 → 200. All 400 parse+referee+generateC tests pass.
 20 sampled compile-on-live tests pass (no failures, no known-issue skips).
 
+### 14. Corpus campaign: atmega168p + arduino-mega (sb3-creator a27337f)
+
+Extended the 200-seed corpus generator to 8 devices (was 6). All 200 seeds
+compiled against the live service — full report:
+
+| device | target | pass | known-issue | findings |
+|---|---|---|---|---|
+| arduino-mega | atmega2560 | 27/27 | 0 | 0 |
+| atmega168p | atmega168p | 23/23 | 0 | 0 |
+| arduino-nano | atmega328p | 31/31 | 0 | 0 |
+| arduino-uno | atmega328p | 23/23 | 0 | 0 |
+| pico | rp2040 | 20/20 | 0 | 0 |
+| stc12c5a60s2 | stc12c5a60s2 | 16/28 | 12 | 0 |
+| stc15f2k60s2 | stc15f2k60s2 | 12/19 | 7 | 0 |
+| stc89c52rc | stc89c52rc | 24/29 | 5 | 0 |
+
+**Zero findings**: every seed the referee accepts also compiles. The 24
+known-issue are the pre-existing `bw_print_num` implicit-declaration gap
+on 8051 targets. Both new devices are 100% clean.
+
 ### 12. Mega + 168P gallery examples (sb3-creator f9a47ed)
 
 Four device-specific examples verified against the live compile service:
@@ -267,6 +287,7 @@ d2af2e1  corpus-differential: env-gated CI test for oracle-differential sampling
 
 ### sb3-creator (main)
 ```
+a27337f  corpus generator: add atmega168p + arduino-mega to device pool
 f9a47ed  mega + 168p gallery examples: blink, 16-ch ADC, 8-LED port walker
 d8c31f5  corpus generator: wait_until, repeat_until, PWM; 200 seeds all compile
 fd48678  arduino-import: 21 built-in examples through cToPseudocode + referee
