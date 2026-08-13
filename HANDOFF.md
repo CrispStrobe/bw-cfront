@@ -35,6 +35,23 @@ Three new constructs in the seeded corpus generator:
 Seed count raised from 100 → 200. All 400 parse+referee+generateC tests pass.
 20 sampled compile-on-live tests pass (no failures, no known-issue skips).
 
+### 16. BASIC tab in the bundle app (brickwright-lite 636a553)
+
+Fifth language tab in the Code pane: BBC BASIC / MS BASIC 1.1.
+
+**VIEW**: `generateBASIC` output with two toggles — profile (bbc/ms) and
+line numbers (on/off; ms always numbered). Refusals (multi-WHEN etc.)
+render as `REM` lines with the reasons, not as an empty pane.
+
+**IMPORT**: paste BASIC → `basicToPseudocode` → blocks. Reader warnings
+(unmapped lines kept as `# BASIC: <line>` comments) surface in the UI.
+
+Also vendors `basicToPseudocode.js` via sync-sb3creator.mjs (new entry
+in the FILES list). 116 tests pass.
+
+sb3-creator app has no code tabs (pseudocode-only), so the BASIC tab
+is in lite only — this is correct per the architecture.
+
 ### 15. Retro/BASIC corpus catalog (retro-corpus-public 80e97a1)
 
 Sorted 9 repos into publishable vs research-only:
@@ -300,6 +317,7 @@ cf4b447  HANDOFF.md: record Nano examples landed in sb3-creator gallery
 
 ### brickwright-lite (main)
 ```
+636a553  BASIC tab: generateBASIC view + basicToPseudocode import, two toggles
 c7b7626  vendor: Mega + 168P examples, sb3-creator device axes, extension tiles
 d2af2e1  corpus-differential: env-gated CI test for oracle-differential sampling
 103676b  sync-examples: vendor gallery from sb3-creator with devices + refusals
