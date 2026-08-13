@@ -128,10 +128,36 @@ Categories 01.Basics, 02.Digital, 03.Analog.
 
 | item | status | next step |
 |---|---|---|
+| Referee vocab gaps | `control_wait_until`, `control_repeat_until`, `devices_setservo`, `devices_setmotor`, `stc12_setpart` not implemented | Add to traceOracle.js KNOWN set; 46 program-runs unblocked |
+| `bw_print_num` implicit declaration | 8051 generateC emits call without forward decl; SDCC treats as error | Fix in sb3Creator.js cTaskBlock print path — add `void bw_print_num(int);` |
+| Corpus generator: more opcodes | Generator uses only pin ops, IF, REPEAT, FOREVER, variables | Add wait_until, repeat_until, PWM (set to N percent), toggle, print |
+| Arduino import: deeper | Only categories 01-03 imported; 04.Communication+ untouched | Extend to remaining categories; unclear-licence ones to ../stc-research |
 | UNO examples in gallery | 6 examples in `avr-examples/` (bw-cfront), not in sb3-creator gallery | copy into sb3-creator/examples/, add to index.json with `"device": "arduino-uno"` |
 | AVR symbol extraction test | no pytest that POSTs a two-task AVR program and asserts response shape | write one modeled on test_arm_build.py |
 | Arduino library support | bare avr/io.h only | separate decision (LGPL-2.1 obligation) |
 | array-subscript-dialect.md | filed in spec-updates/, unread by sb3-creator | next sb3-creator session should read it |
+
+---
+
+## What was learned (not yet in a spec-update)
+
+1. **Cross-device trace identity has 4 legitimate exceptions**: 02-dimmer,
+   10-motor-speed, 15-voltage-divider, 16-ldr-bargraph. These use ADC-derived
+   values in `set <pin> to <value>` (a physical-level write), and the STC12's
+   ACTIVE LOW polarity inverts the intent compared to Pico's active-high.
+   Both results are correct — the trace comparator must exclude these, not
+   normalize them. The root cause is `stc12_writepin` being polarity-aware.
+
+2. **Arduino .ino import needs a preamble**: `#include <Arduino.h>` and
+   `#define LED_BUILTIN 13` must be prepended — the IDE does this implicitly,
+   but cToPseudocode needs the include to detect the Arduino vocabulary and
+   the define to resolve LED_BUILTIN (a toolchain constant, not in the sketch).
+
+3. **The corpus generator's degenerate-trace trap**: a program with output pins
+   but all pin ops inside `IF (uninitializedVar > N)` produces a degenerate
+   trace (no events). Fixed by prepending an unconditional `turn on` at the
+   start of every task. The lesson: property testing needs runtime guarantees
+   (reachability), not just syntactic checks (presence of a pin op string).
 
 ---
 
@@ -158,6 +184,7 @@ brickwright-lite (BSD-3), stc lab (MIT + Apache-2.0 NOTICE).
 
 ### bw-cfront (master)
 ```
+b17e9f2  HANDOFF.md: record corpus-and-oracles campaign deliverables
 602f3ef  HANDOFF.md: record retarget gallery integration
 9c8bcf1  HANDOFF.md: record pico04-button digital input example
 5339d11  HANDOFF.md: record Pico examples and ARM endpoint as done
@@ -197,5 +224,11 @@ a11bf14  build_arm: RP2040 compile endpoint via arm-none-eabi-gcc
 - **Nano examples**: `sb3-creator/examples/nano01-blink/` etc.
 - **Pico examples**: `sb3-creator/examples/pico01-blink/` etc.
 - **Gallery test skip**: `sb3-creator/test/gallery.test.mjs` line 54, 70
+- **Retarget amplification**: `sb3-creator/test/retarget-amplification.test.mjs`
+- **Corpus generator**: `sb3-creator/test/corpus-generator.test.mjs` (COMPILE_TEST=1 for live)
+- **Arduino import test**: `sb3-creator/test/arduino-import.test.mjs` (needs corpus/ clone first)
+- **Retarget gallery**: `sb3-creator/test/retarget-gallery.test.mjs`
+- **Referee**: `sb3-creator/src/utils/traceOracle.js` (interpretTrace, compareTraces)
+- **Retarget pools**: `sb3-creator/src/utils/sb3Creator.js:8049` (RETARGET_POOLS)
 - **Live service**: `https://stc-compiler.vercel.app` (`/health`, `/compile`)
 - **Vercel size**: AVR (36 MB) + ARM (82 MB) + SDCC (8 MB) = 126 MB / 250 MB limit
