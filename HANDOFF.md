@@ -35,6 +35,26 @@ Three new constructs in the seeded corpus generator:
 Seed count raised from 100 → 200. All 400 parse+referee+generateC tests pass.
 20 sampled compile-on-live tests pass (no failures, no known-issue skips).
 
+### 15. Retro/BASIC corpus catalog (retro-corpus-public 80e97a1)
+
+Sorted 9 repos into publishable vs research-only:
+
+**Publishable** (cloned to `/mnt/volume1/code/retro-corpus-public/`):
+- `BBCSDL` (zlib) — 254 .bbc programs; console build = future generateBASIC oracle
+- `next-bbc-basic` (zlib) — Z80 ASM interpreter; 17 .bbc examples
+- `agon-bbc-basic` (zlib) — eZ80 ASM interpreter; 25+ .bas examples
+- `PicoBB` (zlib) — Pico port of BBCSDL; C runtime reference, no BASIC programs
+- `BBCMicroDevelopment` (Apache-2.0) — teaching repo; 4 .bas + 1 .6502
+- `BASIC-M6502` (MIT) — Microsoft BASIC v1.1 for 6502; 6954-line reference
+
+**Research-only** (cloned to `/mnt/volume1/code/stc-research/retro-corpus/`):
+- `polymer-picker-6502` (unlicensed) — BBC Micro game; 5 .bas files
+- `chalice-raider` — **NOT FOUND** (deleted or private)
+- `1D_Life` — **NOT FOUND** (deleted or private)
+
+~300 publishable BASIC programs total. Catalog in `retro-corpus-public/README.md`.
+No remote created for the catalog repo (house rule: no new GitHub repos).
+
 ### 14. Corpus campaign: atmega168p + arduino-mega (sb3-creator a27337f)
 
 Extended the 200-seed corpus generator to 8 devices (was 6). All 200 seeds
