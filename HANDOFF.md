@@ -1,6 +1,55 @@
-# bw-cfront — session handoff (2026-08-13)
+# bw-cfront — session handoff (2026-08-14)
 
 ## What this session completed
+
+### 21. All-green sweep (2026-08-14)
+
+**CI status:**
+
+| repo | branch | SHA | status | note |
+|---|---|---|---|---|
+| sb3-creator | main | 44c5227 | RED | lint: `'opts' assigned but never used` at sb3Creator.js:6192 (micro:bit PIN commit) |
+| brickwright-lite | main | 6831d87 | GREEN | Build (permissive base) |
+| stc-compiler | main | 5855f37 | GREEN | ci + pages build |
+| emu8051-stc | master | 0aaf3a9 | GREEN | Build SDCC WASM |
+
+**Deploys (both current with main):**
+
+| service | target | deployed SHA | freshness |
+|---|---|---|---|
+| GH Pages | crispstrobe.github.io/brickwright-lite | 6831d87 | current |
+| Vercel | stc-compiler.vercel.app | 5855f37 | current |
+
+**Production endpoint probes:**
+
+| endpoint | toolchain | result | detail |
+|---|---|---|---|
+| /health | — | PASS | version 5855f37, all targets listed |
+| /compile | 8051 (stc12c5a60s2) | PASS | 382 bytes |
+| /compile | AVR (atmega328p) | PASS | 406 bytes |
+| /compile | ARM (rp2040) | PASS | 32 bytes |
+| /compile+listing | 8051 | PASS | format: sdcc |
+| /compile+listing | AVR | PASS | format: avr-gcc, 2 lineMap entries |
+| /compile+listing | ARM | PASS | format: arm-gcc |
+| /assemble | AVR (atmega328p) | PASS | 34 bytes, listing present |
+| /assemble | 8051 (mcs51) | **FAIL 500** | `sdas8051` not on PATH — assemble.py uses bare command, not staged `/tmp/sdcc/bin/` path |
+| /assemble | 6502 (eater6502) | **FAIL 500** | `ca65`/`ld65` (cc65) not vendored in repo; only available locally |
+
+**Score: 8/10 probes pass.** Two /assemble failures are a deployment gap, not a
+code logic bug: the 17 CI tests pass because GitHub runners have these tools
+installed system-wide, but Vercel's serverless environment does not.
+
+**Fixes needed (stc-compiler, outside bw-cfront write boundary):**
+1. `assemble_8051`: use `os.path.join(STAGE_BIN, "sdas8051")` and
+   `os.path.join(STAGE_BIN, "sdld")` instead of bare command names
+2. `assemble_6502`: vendor cc65 binaries (ca65, ld65) like avr-gcc is vendored,
+   or mark 6502 assembly as local-only
+
+**sb3-creator RED fix needed:**
+- Line 6192:49 — remove or use the `opts` variable introduced in the micro:bit
+  PIN support commit (44c5227). Lint: `--max-warnings 0`.
+
+---
 
 ### 8. Gallery vendoring into lite (brickwright-lite 103676b)
 
