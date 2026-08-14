@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  avr-compiler-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install AVR toolchain
+        run: sudo apt-get update && sudo apt-get install -y gcc-avr avr-libc
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        run: pip install -r avr-compiler/requirements.txt
+
+      - name: Run avr-compiler tests
+        working-directory: avr-compiler
+        run: python -m pytest test/test_compile.py -v
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate JSON files
+        run: |
+          find avr-examples -name '*.json' -exec python3 -c "
+          import json, sys
+          for f in sys.argv[1:]:
+              try:
+                  json.load(open(f))
+              except Exception as e:
+                  print(f'FAIL: {f}: {e}')
+                  sys.exit(1)
+              print(f'  ok: {f}')
+          " {} +
+
+      - name: Validate Python syntax
+        run: python3 -m py_compile avr-compiler/app.py
