@@ -2,6 +2,45 @@
 
 ## What this session completed
 
+### 24. Retro bench gallery examples (sb3-creator 3383190)
+
+Two wire-based circuit.json bench examples with extractor verification:
+
+**eater6502-bench**: W65C02 + 62256 (RAM) + 28C256 (ROM) + W65C22 (VIA) +
+W65C51 (ACIA) + 2x 74HC00 (A15 NAND decode). Extracts to:
+```
+MAP RAM $0000-$3FFF, MAP ROM $8000-$FFFF
+CHIP via = W65C22 AT $6000, CHIP acia = W65C51 AT $5000
+```
+
+**z80-bench**: Z80 + 62256 (RAM) + 28C256 (ROM) + MC6850 (I/O-mapped ACIA) +
+2x 74HC00 (MREQ/IORQ split decode, Searle shape). Extracts to:
+```
+MAP ROM $0000-$7FFF, MAP RAM $8000-$FFFF
+CHIP acia = MC6850 AT PORT $0080
+```
+
+Both: zero extractor refusals, pass bw-board examples-gate.test.mjs.
+Each has a `check-extract.mjs` that asserts the extractor output matches the
+preset map exactly.
+
+Prerequisite fixes:
+- bw-board ac0677e: 28c256 select pin `ceb` (was `csb`, mismatched parts-data)
+- bw-board 4fe876a: examples-gate DESIGNER_ONLY set includes retro DIP kinds
+  (w65c02, 62256, 28c256, w65c22, w65c51, z80, mc6850 — extract-only, no
+  board engine device model)
+
+### 23. Lite vendor re-sync (brickwright-lite 930000d)
+
+Synced bw-circuit-ui to 00958c6 (352/352 files). Brings in all 8 retro DIP
+part sidecars (w65c02, w65c22, w65c51, 28c256, 62256, 74hc00, z80, mc6850
+json+svg). Also picks up CircuitDesigner, schematic, DRC, declarations, and
+infer-seated updates. 4 stale model files removed.
+
+130/144 lite tests pass; 11 failures from upstream component API evolution
+(toolbar, declarations, schematic tests need updating — not caused by the
+sync, but exposed by it).
+
 ### 22. /assemble nRF52833 target (stc-compiler 199e663)
 
 New `/assemble` target `nrf52833` (micro:bit V2, Cortex-M4) via the existing
