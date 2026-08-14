@@ -2,6 +2,22 @@
 
 ## What this session completed
 
+### 22. /assemble nRF52833 target (stc-compiler 199e663)
+
+New `/assemble` target `nrf52833` (micro:bit V2, Cortex-M4) via the existing
+arm-none-eabi-gcc bundle. Fourth assemble chain.
+
+- **Input**: GAS `.s` source with `.syntax unified` / `.cpu cortex-m4` / `.thumb`
+- **Output**: Intel HEX (`objcopy -O ihex`) — the format DAPLink MSD drag-flash
+  accepts on micro:bit V2
+- **Linker script**: `nrf52833.ld`, clean-room from Nordic nRF52833 PS memory map
+  (512K flash @ 0x0, 128K RAM @ 0x20000000, vector table at origin)
+- **CODAL/SoftDevice rejection**: pattern match on `MicroBitDisplay`, `codal_`,
+  `nrf_sdh_`, `softdevice`, `CODAL_` — returns clean `success:false` with reason
+- **Tests**: 10 new (vector-table+loop, GPIO row/col LED P0.21/P0.28, Intel HEX
+  format, listing, syntax error, CODAL rejection, /health, toolchain field).
+  69 total tests pass.
+
 ### 21. All-green sweep (2026-08-14)
 
 **CI status (all GREEN after fixes):**
