@@ -4,50 +4,44 @@
 
 ### 21. All-green sweep (2026-08-14)
 
-**CI status:**
+**CI status (all GREEN after fixes):**
 
 | repo | branch | SHA | status | note |
 |---|---|---|---|---|
-| sb3-creator | main | 44c5227 | RED | lint: `'opts' assigned but never used` at sb3Creator.js:6192 (micro:bit PIN commit) |
+| sb3-creator | main | de072db | GREEN | lint fix landed (was RED at 44c5227) |
 | brickwright-lite | main | 6831d87 | GREEN | Build (permissive base) |
-| stc-compiler | main | 5855f37 | GREEN | ci + pages build |
+| stc-compiler | main | 6b18055 | GREEN | staged sdas8051/sdld fix landed (was 5855f37) |
 | emu8051-stc | master | 0aaf3a9 | GREEN | Build SDCC WASM |
 
-**Deploys (both current with main):**
+**Deploys (all current with main):**
 
 | service | target | deployed SHA | freshness |
 |---|---|---|---|
 | GH Pages | crispstrobe.github.io/brickwright-lite | 6831d87 | current |
-| Vercel | stc-compiler.vercel.app | 5855f37 | current |
+| Vercel | stc-compiler.vercel.app | 6b18055 | current |
 
-**Production endpoint probes:**
+**Production endpoint probes (final):**
 
 | endpoint | toolchain | result | detail |
 |---|---|---|---|
-| /health | — | PASS | version 5855f37, all targets listed |
+| /health | — | PASS | version 6b18055, all targets listed |
 | /compile | 8051 (stc12c5a60s2) | PASS | 382 bytes |
 | /compile | AVR (atmega328p) | PASS | 406 bytes |
 | /compile | ARM (rp2040) | PASS | 32 bytes |
 | /compile+listing | 8051 | PASS | format: sdcc |
-| /compile+listing | AVR | PASS | format: avr-gcc, 2 lineMap entries |
+| /compile+listing | AVR | PASS | format: avr-gcc |
 | /compile+listing | ARM | PASS | format: arm-gcc |
-| /assemble | AVR (atmega328p) | PASS | 34 bytes, listing present |
-| /assemble | 8051 (mcs51) | **FAIL 500** | `sdas8051` not on PATH — assemble.py uses bare command, not staged `/tmp/sdcc/bin/` path |
-| /assemble | 6502 (eater6502) | **FAIL 500** | `ca65`/`ld65` (cc65) not vendored in repo; only available locally |
+| /assemble | 8051 (mcs51) | PASS | 52 bytes, listing present |
+| /assemble | AVR (atmega328p) | PASS | 38 bytes, listing present |
+| /assemble | 6502 (eater6502) | CLEAN FAIL | `success:false` + message: cc65 not deployed; follow-up to vendor ca65/ld65 |
 
-**Score: 8/10 probes pass.** Two /assemble failures are a deployment gap, not a
-code logic bug: the 17 CI tests pass because GitHub runners have these tools
-installed system-wide, but Vercel's serverless environment does not.
+**Score: 9/10 probes pass, 1 expected clean failure.** The 6502 /assemble
+returns a proper error (not a 500) because cc65 isn't vendored yet — recorded
+follow-up, not a bug.
 
-**Fixes needed (stc-compiler, outside bw-cfront write boundary):**
-1. `assemble_8051`: use `os.path.join(STAGE_BIN, "sdas8051")` and
-   `os.path.join(STAGE_BIN, "sdld")` instead of bare command names
-2. `assemble_6502`: vendor cc65 binaries (ca65, ld65) like avr-gcc is vendored,
-   or mark 6502 assembly as local-only
-
-**sb3-creator RED fix needed:**
-- Line 6192:49 — remove or use the `opts` variable introduced in the micro:bit
-  PIN support commit (44c5227). Lint: `--max-warnings 0`.
+Initial probe (pre-fix) found two 500s: sdas8051 bare-command-name PATH bug
+and missing cc65. Coordinator fixed both (stc-compiler 6b18055, sb3-creator
+de072db). Re-probe confirmed all clear.
 
 ---
 
