@@ -35,6 +35,28 @@ Three new constructs in the seeded corpus generator:
 Seed count raised from 100 → 200. All 400 parse+referee+generateC tests pass.
 20 sampled compile-on-live tests pass (no failures, no known-issue skips).
 
+### 19. Listing artifact: {asm, lineMap, format, v:1} (stc-compiler 8c7693c)
+
+New `listing.py` extracts a versioned disassembly artifact for all three
+toolchains when `disassemble=True`:
+
+| toolchain | source | format id |
+|---|---|---|
+| AVR (avr-gcc) | `avr-objdump -dS` + `--dwarf=decodedline` | `avr-gcc` |
+| ARM (arm-gcc) | `arm-none-eabi-objdump -dS` + `--dwarf=decodedline` | `arm-gcc` |
+| SDCC (8051) | `.rst` relocatable source listing | `sdcc` |
+
+Response shape: `response["listing"] = {asm, lineMap: [{addr, file, line}], format, v: 1}`.
+The existing `response["disassembly"]` string is preserved for backwards compatibility.
+
+`-gdwarf-2` / `--debug` now triggered by `disassemble=True` as well as
+`symbols=True`, so source interleaving has line info available.
+
+15 new smoke tests (`test_listing.py`): 42 total tests pass.
+
+Three consumers: R1 asm view, R3 debugger stepping map, AVR/ARM debug
+target disasm panes. Client tab is a separate task.
+
 ### 18. Licensing adjudication: BASIC tab labels + attributions
 
 **UI labels fixed** (brickwright-lite f2a6a6c):
@@ -373,6 +395,7 @@ b349d87  pico04-button: digital input example with pad IE verification
 
 ### stc-compiler (main)
 ```
+8c7693c  listing artifact: {asm, lineMap, format, v:1} for all three toolchains
 d005bd6  avr widening: ATmega2560 + ATtiny85 compile targets with 10-test verification
 927f806  avr: add avr6 (ATmega2560) and avr25 (ATtiny85/84) multilibs, trim device libs
 ef749f2  arm: add libisl23 to lib-deps
