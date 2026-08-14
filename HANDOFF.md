@@ -35,6 +35,25 @@ Three new constructs in the seeded corpus generator:
 Seed count raised from 100 → 200. All 400 parse+referee+generateC tests pass.
 20 sampled compile-on-live tests pass (no failures, no known-issue skips).
 
+### 20. /assemble endpoint (stc-compiler 77d2be7 + 5855f37)
+
+New `POST /assemble` with `{asm, target}`. Three toolchains:
+
+| chain | assembler | linker | output | error format |
+|---|---|---|---|---|
+| 8051 | sdas8051 | sdld | Intel HEX | `file:line: Error: msg` |
+| 6502 | ca65 | ld65 (eater.cfg) | raw binary + labels | `file(line): Error: msg` |
+| AVR | avr-gcc -x asm-with-cpp | (gcc links) | Intel HEX | `file:line: Error: msg` |
+
+Response: `{success, base64, errors: [{line, message}], listing: {asm, lineMap, format, v:1}, filename, bytes, toolchain}`.
+6502 also returns `labels` (ld65 -Ln output for bw-board `symbolsFromLd65Labels`).
+
+Errors normalized per-toolchain to `[{line, message}]`. ld65's harmless
+STARTUP-segment warning is filtered out.
+
+17 smoke tests (`test_assemble.py`): per chain, valid blink + syntax error.
+59 total tests pass. `/health` lists `assemble_targets`.
+
 ### 19. Listing artifact: {asm, lineMap, format, v:1} (stc-compiler 8c7693c)
 
 New `listing.py` extracts a versioned disassembly artifact for all three
@@ -395,6 +414,8 @@ b349d87  pico04-button: digital input example with pad IE verification
 
 ### stc-compiler (main)
 ```
+5855f37  test_assemble: 17 smoke tests for /assemble endpoint
+77d2be7  /assemble endpoint: raw assembly for 8051, 6502, AVR
 8c7693c  listing artifact: {asm, lineMap, format, v:1} for all three toolchains
 d005bd6  avr widening: ATmega2560 + ATtiny85 compile targets with 10-test verification
 927f806  avr: add avr6 (ATmega2560) and avr25 (ATtiny85/84) multilibs, trim device libs
