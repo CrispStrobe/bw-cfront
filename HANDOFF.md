@@ -34,11 +34,17 @@ Array subscripts (1472 occurrences) were the #1 structural gap.
 839 tests pass.
 
 **Second pass** (sb3-creator 1f53052): non-trivial for-loops now emit
-REPEAT UNTIL with the step moved into the body. `for(mask=0x80; mask!=0;
-mask>>=1)` → `set mask to 128; REPEAT UNTIL mask=0: body; set mask to
-mask shiftright 1`. Handles all compound step operators. Eliminates 77
-"for loop not a simple counter" warnings. Remaining: 82 bare local var
-decls (noise — uninitialized declarations carry no program state).
+REPEAT UNTIL with the step moved into the body. Eliminates 77 "for loop
+not a simple counter" warnings.
+
+**Third pass** (sb3-creator 856cbe5): type aliases (`uchar`, `uint8`,
+`u8`, `uint16`, etc.) recognized as type keywords in declarations AND
+casts. Multi-var declarations (`int a=0, b=5`) emit separate set
+statements. "statement dropped" exits the corpus top-10 warnings entirely.
+
+**Final corpus state**: 219/520 programs clean (42.1%). Remaining
+structural: typedefs (genuinely inexpressible), break→flag (correct
+transformation). Both are irreducible without dialect extensions.
 
 ### 28. /assemble Z80 target (stc-compiler a443ee2)
 
