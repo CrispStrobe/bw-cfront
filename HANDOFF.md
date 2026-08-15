@@ -1,5 +1,22 @@
 # bw-cfront — session handoff (2026-08-15)
 
+## DONE — standing work contract complete
+
+All 4 tasklist items are delivered, deployed, and verified live:
+
+| # | item | SHA | prod verified |
+|---|---|---|---|
+| 1 | cc65 vendor (/assemble 6502) | stc-compiler a407685 | eater blink 32768 bytes, byte-identical |
+| 2 | /uf2 endpoint (Pico drag-flash) | stc-compiler ce0fc23 | magic 0x0A324655, family 0xe48bff56 |
+| 3 | Z80 /assemble (sdasz80) | stc-compiler a443ee2 | LD A,$55;HALT → 3E 55 76 |
+| 4 | VDP gallery (eater6502-vdp-hello) | sb3-creator 47bca6f | gate green, extractor-clean |
+
+89 stc-compiler tests pass. 729 sb3-creator tests pass.
+Assemble service: 5 toolchains, 16 targets.
+Phase 2 corpus baseline established: 520 programs, first fixes shipped.
+
+---
+
 ## What this session completed
 
 ### 29. Phase 2 baseline + first fixes (sb3-creator f259006)
