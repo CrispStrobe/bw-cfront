@@ -68,8 +68,26 @@ deploy with ATtiny88 as the 17th target.
 |---|---|---|
 | Arduino library support | bare avr/io.h only | separate decision (LGPL-2.1 obligation) |
 | Vercel deploy verification | ATtiny88 not yet live | wait for rate limit to lift |
-| ~~6502/ATtiny88 round-trip~~ | FIXED (e7956c1) — port register pin writes now reverse-mapped | 32/32 gallery round-trips stable |
-| ~~cToPseudocode userFns runtime exclusion~~ | FIXED (991e660) — `bw_`/`tone_`/`scratch_`/`__` prefixes excluded | done |
+| ~~6502/ATtiny88 round-trip~~ | FIXED (e7956c1 + 3999910) — port-register pin writes reverse-mapped, ISR/sei/cli ignored | 33/33 stable, 30 zero-warn |
+
+## Round-trip ledger (C → pseudocode → C)
+
+33/33 gallery examples with `@bw-begin` markers round-trip STABLE.
+30 produce zero warnings. 3 have informational current-budget warnings only.
+
+**Device coverage tested:**
+- STC12C5A60S2: blink, multi-task, ADC, print, PWM, servo, motor, cube — all stable
+- STC15F2K60S2: blink, multi-task, ADC, print — all stable, zero warnings
+- STC15W408AS: blink — stable, zero warnings
+- STC89C52RC: blink — stable
+- EATER6502: blink, full-build — stable (VIA register writes survive)
+- ATTINY88: blink, multi-task, pendant (16 pins) — all stable, zero structural warnings
+- PICO/AVR/micro:bit: skipped (cToPseudocode reads 8051/6502/ATtiny88 C only)
+
+**Irreducible warning categories** (not bugs, not fixable):
+- Current-budget informational: "8/16 output pins × 20 mA" — correct, desirable
+- Typedefs in corpus: genuinely inexpressible in pseudocode
+- break→flag in corpus: correct structural transformation
 
 ---
 
