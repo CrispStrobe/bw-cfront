@@ -558,6 +558,15 @@ Per the arduino-cc0-campaign.md doctrine, assessed all 6 items:
   `print` mapped to UART0; a second UART would need a `print2`/`print to`
   dialect extension. Not yet expressible.
 
+### 37. Mega Timer3/4/5 init for PWM (sb3-creator 99b4034)
+
+The pwm_set case statements were setting COMnx1 bits but Timer3/4/5
+were never initialized to fast PWM mode. Added conditional TCCRnA/B
+init in bw_setup — only timers whose pins are declared get initialized.
+Verified: D2+D6+D44 compiles to 905 bytes with correct timer init.
+
+167/167 gallery examples generate C with zero failures.
+
 ### 35. Mega PWM coverage D2-D8 + D44-D46 (sb3-creator 6367c14)
 
 Extended ATmega2560 pwm_set from 4 pins (D9-D12) to 15 pins across
