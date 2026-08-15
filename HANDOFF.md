@@ -543,13 +543,15 @@ Categories 01.Basics, 02.Digital, 03.Analog.
 | item | status | next step |
 |---|---|---|
 | Referee vocab gaps | `control_wait_until`, `control_repeat_until`, `devices_setservo`, `devices_setmotor`, `stc12_setpart` not implemented | Add to traceOracle.js KNOWN set; 46 program-runs unblocked |
-| `bw_print_num` implicit declaration | 8051 generateC emits call without forward decl; SDCC treats as error | Fix in sb3Creator.js cTaskBlock print path — add `void bw_print_num(int);` |
-| Corpus generator: more opcodes | Generator uses only pin ops, IF, REPEAT, FOREVER, variables | Add wait_until, repeat_until, PWM (set to N percent), toggle, print |
 | Arduino import: deeper | Only categories 01-03 imported; 04.Communication+ untouched | Extend to remaining categories; unclear-licence ones to ../stc-research |
-| UNO examples in gallery | 6 examples in `avr-examples/` (bw-cfront), not in sb3-creator gallery | copy into sb3-creator/examples/, add to index.json with `"device": "arduino-uno"` |
-| AVR symbol extraction test | no pytest that POSTs a two-task AVR program and asserts response shape | write one modeled on test_arm_build.py |
 | Arduino library support | bare avr/io.h only | separate decision (LGPL-2.1 obligation) |
-| array-subscript-dialect.md | filed in spec-updates/, unread by sb3-creator | next sb3-creator session should read it |
+
+**Cleared this session:**
+- ~~bw_print_num implicit declaration~~ — 8051 print library + UART setup (49ce197)
+- ~~Corpus generator: more opcodes~~ — already done in d8c31f5 (wait_until, repeat_until, PWM, toggle, print)
+- ~~UNO examples in gallery~~ — 6 examples copied (dfadf99)
+- ~~AVR symbol extraction test~~ — 8-test pytest (7578ab3)
+- ~~array-subscript-dialect.md~~ — implemented in cToPseudocode Phase 2 (f259006)
 
 ---
 
