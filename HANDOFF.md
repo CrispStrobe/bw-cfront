@@ -31,8 +31,10 @@ Array subscripts (1472 occurrences) were the #1 structural gap.
 - compound `*=`, `/=`, `%=` → `set x to x OP rhs` (was dropped)
 - local var with init: `int x = 0;` → `set x to 0` (was silent drop)
 
-729 tests pass. Next targets: remaining statement drops (82 bare
-local var decls, 77 non-trivial for-loops).
+839 tests pass. Remaining structural drops: 82 bare local var decls
+(noise — no initializer = no program state), 77 non-trivial for-loops
+(39 are bit-walking `mask>>=1` / `mask<<=1` — genuinely REPEAT UNTIL,
+not counting loops; the fallback is correct, just less precise).
 
 ### 28. /assemble Z80 target (stc-compiler a443ee2)
 
