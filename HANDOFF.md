@@ -67,7 +67,9 @@ deploy with ATtiny88 as the 17th target.
 | item | status | next step |
 |---|---|---|
 | Arduino library support | bare avr/io.h only | separate decision (LGPL-2.1 obligation) |
-| Vercel deploy verification | ATtiny88 not yet live | wait for rate limit to lift (~24h from 2026-08-15 18:00) |
+| Vercel deploy verification | ATtiny88 not yet live | wait for rate limit to lift |
+| 6502/ATtiny88 round-trip | port register writes not reverse-mapped to pin names | cToPseudocode needs to map `BW_VIA_ORA |= (1<<N)` → `turn on pinN` and `PORTB &= ~(1<<N)` → pin ops using @bw pin markers |
+| cToPseudocode userFns runtime exclusion | fixed `bw_`/`tone_`/`scratch_`/`__` prefixes (991e660) | done |
 
 ---
 
