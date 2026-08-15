@@ -563,6 +563,12 @@ Per the arduino-cc0-campaign.md doctrine, assessed all 6 items:
 ATtiny88 (avr25, 8 KB flash, 28-pin DIP — the Blinkenrocket MCU) added
 to both /compile and /assemble. Device header, CRT, lib vendored.
 5 new tests with Blinkenrocket-style PORTB/PORTD pin test. 102 total pass.
+CI green. Local: compile 234 bytes, assemble 42 bytes.
+
+**BLOCKED**: Vercel production deploy not triggering — only github-pages
+deploys fire since 1f80d08. Previous commits had both. Likely a Vercel
+webhook issue. Coordinator: check Vercel integration settings or trigger
+a manual deploy.
 
 ### 37. Mega Timer3/4/5 init for PWM (sb3-creator 99b4034)
 
