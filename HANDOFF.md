@@ -538,11 +538,20 @@ Categories 01.Basics, 02.Digital, 03.Analog.
 
 ---
 
+### 33. Arduino import: all 11 categories (sb3-creator 50e7e55)
+
+Extended the import test from 3 categories to all 11 (CC0-1.0). 75 Arduino
+examples total: Communication, Control, Sensors, Display, Strings, USB,
+StarterKit, ArduinoISP. All 75 translate (produce WHEN blocks), 57 re-parse
+clean, 18 have expected parse warnings (Serial, USB HID, ISP, arrays).
+150 import tests pass.
+
+---
+
 ## What is NOT done
 
 | item | status | next step |
 |---|---|---|
-| Arduino import: deeper | Only categories 01-03 imported; 04.Communication+ untouched | Extend to remaining categories; unclear-licence ones to ../stc-research |
 | Arduino library support | bare avr/io.h only | separate decision (LGPL-2.1 obligation) |
 
 **Cleared this session:**
