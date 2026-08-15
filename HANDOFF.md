@@ -13,10 +13,13 @@
 | 3 | Z80 /assemble (sdasz80) | stc-compiler | a443ee2 | deployed, verified live |
 | 4 | VDP gallery (eater6502-vdp-hello) | sb3-creator | 47bca6f | gate green |
 
-**Blinkenrocket (my lane = hosted compile):**
-- ATtiny88 target: stc-compiler `1f80d08` — CI green, 5 tests, 102 total pass
+**Blinkenrocket (my lane = hosted compile + generateC):**
+- ATtiny88 compile target: stc-compiler `1f80d08` — CI green, 5 tests, 102 total
 - Device header (iotn88.h), CRT, lib vendored in `avr/` bundle
-- **NOT live on Vercel** — rate-limited ~24h; GH Pages is the deploy target
+- generateC ATtiny88: sb3-creator `ddcaac0` — Timer1 CTC tick (Timer0 has no CTC),
+  PB/PC/PD/PA pin names, RETARGET_POOLS, SPOKEN pin validation
+- Verified: pseudocode → generateC → avr-gcc attiny88 = 758 bytes
+- **NOT live on Vercel** — rate-limited; GH Pages is the deploy target
 
 **Arduino CC0 campaign (generateC AVR coverage):**
 - tone_set for AVR: Timer2 CTC + ISR pin toggle (sb3-creator `56600ab`)
