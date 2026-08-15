@@ -538,6 +538,17 @@ Categories 01.Basics, 02.Digital, 03.Analog.
 
 ---
 
+### 35. Mega PWM coverage D2-D8 + D44-D46 (sb3-creator 6367c14)
+
+Extended ATmega2560 pwm_set from 4 pins (D9-D12) to 15 pins across
+Timers 1-5. Verified: D2+D6+D44 compiles to 844 bytes on hosted service.
+
+### 34. AVR tone_set — Timer2 CTC + ISR toggle (sb3-creator 56600ab)
+
+Software square-wave on any declared TONE pin via Timer2 COMPA interrupt.
+Prescaler auto-selected. freq=0 stops. 8051/ARM get stubs.
+Verified: 1167 bytes on hosted service.
+
 ### 33. Arduino import: all 11 categories (sb3-creator 50e7e55)
 
 Extended the import test from 3 categories to all 11 (CC0-1.0). 75 Arduino
