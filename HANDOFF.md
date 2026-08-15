@@ -2,6 +2,21 @@
 
 ## What this session completed
 
+### 29. Phase 2 baseline + first fixes (sb3-creator f259006)
+
+Corpus baseline: 1282 files, 1279 translate (99.8%), 520 have main().
+Array subscripts (1472 occurrences) were the #1 structural gap.
+
+**Fixed:**
+- array read: `arr[i]` → `item i of arr` (in expressions)
+- array write: `arr[i] = val` → `replace item i of arr with val`
+- `arr[i]++/--` → `replace item i of arr with item + 1`
+- compound `*=`, `/=`, `%=` → `set x to x OP rhs` (was dropped)
+- local var with init: `int x = 0;` → `set x to 0` (was silent drop)
+
+729 tests pass. Next targets: remaining statement drops (82 bare
+local var decls, 77 non-trivial for-loops).
+
 ### 28. /assemble Z80 target (stc-compiler a443ee2)
 
 Fifth assemble chain: Z80 assembly via SDCC's sdasz80 + sdldz80 + makebin.
