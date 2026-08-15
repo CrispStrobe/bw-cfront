@@ -558,6 +558,12 @@ Per the arduino-cc0-campaign.md doctrine, assessed all 6 items:
   `print` mapped to UART0; a second UART would need a `print2`/`print to`
   dialect extension. Not yet expressible.
 
+### 38. ATtiny88 hosted compile (stc-compiler 1f80d08)
+
+ATtiny88 (avr25, 8 KB flash, 28-pin DIP — the Blinkenrocket MCU) added
+to both /compile and /assemble. Device header, CRT, lib vendored.
+5 new tests with Blinkenrocket-style PORTB/PORTD pin test. 102 total pass.
+
 ### 37. Mega Timer3/4/5 init for PWM (sb3-creator 99b4034)
 
 The pwm_set case statements were setting COMnx1 bits but Timer3/4/5
