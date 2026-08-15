@@ -31,10 +31,14 @@ Array subscripts (1472 occurrences) were the #1 structural gap.
 - compound `*=`, `/=`, `%=` → `set x to x OP rhs` (was dropped)
 - local var with init: `int x = 0;` → `set x to 0` (was silent drop)
 
-839 tests pass. Remaining structural drops: 82 bare local var decls
-(noise — no initializer = no program state), 77 non-trivial for-loops
-(39 are bit-walking `mask>>=1` / `mask<<=1` — genuinely REPEAT UNTIL,
-not counting loops; the fallback is correct, just less precise).
+839 tests pass.
+
+**Second pass** (sb3-creator 1f53052): non-trivial for-loops now emit
+REPEAT UNTIL with the step moved into the body. `for(mask=0x80; mask!=0;
+mask>>=1)` → `set mask to 128; REPEAT UNTIL mask=0: body; set mask to
+mask shiftright 1`. Handles all compound step operators. Eliminates 77
+"for loop not a simple counter" warnings. Remaining: 82 bare local var
+decls (noise — uninitialized declarations carry no program state).
 
 ### 28. /assemble Z80 target (stc-compiler a443ee2)
 
