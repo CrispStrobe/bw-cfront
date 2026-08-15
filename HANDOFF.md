@@ -538,6 +538,26 @@ Categories 01.Basics, 02.Digital, 03.Analog.
 
 ---
 
+### 36. Arduino CC0 campaign — generateC AVR coverage (sb3-creator a575788)
+
+Per the arduino-cc0-campaign.md doctrine, assessed all 6 items:
+
+**Implemented (compiles on hosted service):**
+- tone_set for AVR: Timer2 CTC + ISR pin toggle, any TONE pin (56600ab)
+- Mega PWM D2-D8 + D44-D46: Timers 3-5 added (6367c14)
+- setup()/loop() spurious drop warnings fixed (a575788)
+
+**Honestly refused (genuinely inexpressible, not miscompiled):**
+- 08.Strings (14 sketches): ALL use Arduino `String` class (C++ operator
+  overloading, dynamic memory, `.length()/.indexOf()/.replace()` methods).
+  Bare-metal C cannot express these. The importer translates what it can
+  (print statements, pin ops) and warns about the rest. 2-18 pseudocode
+  lines per sketch, 5-20 warnings each. This is the correct refusal.
+- serialEvent: Arduino-framework callback, no bare-metal equivalent.
+- Serial1 on mega (MultiSerial): requires UART1 library. The dialect has
+  `print` mapped to UART0; a second UART would need a `print2`/`print to`
+  dialect extension. Not yet expressible.
+
 ### 35. Mega PWM coverage D2-D8 + D44-D46 (sb3-creator 6367c14)
 
 Extended ATmega2560 pwm_set from 4 pins (D9-D12) to 15 pins across
