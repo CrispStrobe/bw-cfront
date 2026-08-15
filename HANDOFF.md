@@ -53,6 +53,19 @@ emit separate set statements. SFR names in chains silently filtered.
 - pointer derefs (9): `*s -= '0'` — genuinely inexpressible
 - array compound ops (8): `key[i] |= val` — need dialect extension
 
+### 31. AVR symbol extraction test (stc-compiler 7578ab3)
+
+8-test pytest: two-task AVR cooperative scheduler (bw_task0 blink +
+bw_task1 idle) compiled for ATmega328P. Asserts symbol table contains
+both task names with yield entries. 97 total tests pass.
+
+### 30. UNO examples in gallery (sb3-creator dfadf99)
+
+6 Arduino Uno examples copied from bw-cfront/avr-examples into the
+sb3-creator gallery: blink, dimmer, dual-blink, serial-pot, button-led,
+blink-and-print. All parse, generate C, pass examples gate. 133 total
+gallery entries.
+
 ### 28. /assemble Z80 target (stc-compiler a443ee2)
 
 Fifth assemble chain: Z80 assembly via SDCC's sdasz80 + sdldz80 + makebin.
