@@ -2,6 +2,16 @@
 
 ## What this session completed
 
+### 27. eater6502-vdp-hello gallery example (sb3-creator 47bca6f)
+
+EATER6502 + TMS9918 at $4000. Hand-written C program initializes
+Graphics I mode and writes "HELLO" centered on a 32x24 screen via
+`BW_VDP_DATA`/`BW_VDP_CTRL` defines. VDP declared via `CHIP vdp1 =
+TMS9918 AT $4000` in program.bw (no parts-data sidecar yet — extractor
+doesn't detect TMS9918 from wires). Circuit is the standard eater6502-bench
+wiring, extractor-clean with zero refusals. Compiles to 1080 bytes.
+Passes examples gate.
+
 ### 26. /uf2 endpoint for Pico drag-flash (stc-compiler ce0fc23)
 
 POST /uf2 `{base64, origin}` → UF2 container for BOOTSEL drag-flash.
