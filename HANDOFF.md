@@ -53,6 +53,16 @@ emit separate set statements. SFR names in chains silently filtered.
 - pointer derefs (9): `*s -= '0'` — genuinely inexpressible
 - array compound ops (8): `key[i] |= val` — need dialect extension
 
+### 32. bw_print_num 8051 fix (sb3-creator 49ce197)
+
+The 8051 core was missing the bw_putc/bw_print/bw_print_num function bodies
+entirely (6502, ARM, AVR all had them). Added:
+- UART init in bw_setup: SCON mode 1, Timer 1 mode 2 for 9600 baud
+- bw_putc via SBUF + TI flag
+- Forward declarations before task functions
+Verified: two-task print program compiles to 2764 bytes on hosted service.
+Unblocks the 24 known-issue corpus seeds.
+
 ### 31. AVR symbol extraction test (stc-compiler 7578ab3)
 
 8-test pytest: two-task AVR cooperative scheduler (bw_task0 blink +
