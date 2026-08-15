@@ -542,13 +542,13 @@ Categories 01.Basics, 02.Digital, 03.Analog.
 
 | item | status | next step |
 |---|---|---|
-| Referee vocab gaps | `control_wait_until`, `control_repeat_until`, `devices_setservo`, `devices_setmotor`, `stc12_setpart` not implemented | Add to traceOracle.js KNOWN set; 46 program-runs unblocked |
 | Arduino import: deeper | Only categories 01-03 imported; 04.Communication+ untouched | Extend to remaining categories; unclear-licence ones to ../stc-research |
 | Arduino library support | bare avr/io.h only | separate decision (LGPL-2.1 obligation) |
 
 **Cleared this session:**
+- ~~Referee vocab gaps~~ — already implemented (all 5 opcodes in KNOWN + case handlers)
 - ~~bw_print_num implicit declaration~~ — 8051 print library + UART setup (49ce197)
-- ~~Corpus generator: more opcodes~~ — already done in d8c31f5 (wait_until, repeat_until, PWM, toggle, print)
+- ~~Corpus generator: more opcodes~~ — already done in d8c31f5
 - ~~UNO examples in gallery~~ — 6 examples copied (dfadf99)
 - ~~AVR symbol extraction test~~ — 8-test pytest (7578ab3)
 - ~~array-subscript-dialect.md~~ — implemented in cToPseudocode Phase 2 (f259006)
