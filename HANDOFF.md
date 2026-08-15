@@ -1,6 +1,30 @@
-# bw-cfront — session handoff (2026-08-14)
+# bw-cfront — session handoff (2026-08-15)
 
 ## What this session completed
+
+### 26. /uf2 endpoint for Pico drag-flash (stc-compiler ce0fc23)
+
+POST /uf2 `{base64, origin}` → UF2 container for BOOTSEL drag-flash.
+Clean-room implementation from the public UF2 spec (MIT). 256-byte blocks,
+RP2040 family ID `0xe48bff56`, sequential target addresses. Supports both
+flash (`0x10000000`) and SRAM (`0x20000000`) origins.
+
+12 tests: magic bytes, family ID flag, target address, payload size,
+block count, sequential addresses, block numbers, payload content.
+81 total tests pass. Verified live on production.
+
+### 25. Vendor cc65 — /assemble 6502 works hosted (stc-compiler a407685)
+
+Vendored cc65 V2.19 (zlib licence) Linux binaries: ca65 + ld65 + none.lib
++ asminc headers. 2.4 MB bundle, staged like the ARM chain (Linux-guarded,
+dev Macs use brew cc65).
+
+- `/assemble` targets `eater6502`/`6502`/`w65c02` now assemble on the
+  hosted service (were returning "cc65 not deployed")
+- ca65 invoked with `--cpu 65C02` (W65C02 ISA)
+- Output byte-identical to system cc65
+- `/health` reports cc65 version
+- Verified live: eater blink ROM assembles to 32768 bytes with listing + labels
 
 ### 24. Retro bench gallery examples (sb3-creator 3383190)
 
