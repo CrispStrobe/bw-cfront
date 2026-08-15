@@ -2,6 +2,19 @@
 
 ## What this session completed
 
+### 28. /assemble Z80 target (stc-compiler a443ee2)
+
+Fifth assemble chain: Z80 assembly via SDCC's sdasz80 + sdldz80 + makebin.
+Output is raw binary (32K ROM image padded with $FF). Vendored sdasz80 and
+sdldz80 binaries into the SDCC bundle.
+
+8 tests with hand-computed opcodes:
+- `LD A,$55; HALT` → bytes `3E 55 76` at address 0
+- `OUT ($80),A` → bytes `D3 80` (MC6850 ACIA port)
+- 32768-byte binary, listing, syntax error, /health listing
+
+89 total tests pass.
+
 ### 27. eater6502-vdp-hello gallery example (sb3-creator 47bca6f)
 
 EATER6502 + TMS9918 at $4000. Hand-written C program initializes
