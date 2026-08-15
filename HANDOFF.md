@@ -42,9 +42,16 @@ not a simple counter" warnings.
 casts. Multi-var declarations (`int a=0, b=5`) emit separate set
 statements. "statement dropped" exits the corpus top-10 warnings entirely.
 
-**Final corpus state**: 219/520 programs clean (42.1%). Remaining
-structural: typedefs (genuinely inexpressible), break→flag (correct
-transformation). Both are irreducible without dialect extensions.
+**Fourth pass** (sb3-creator 71ccf12): chained assignments (`A = B = C = 0`)
+emit separate set statements. SFR names in chains silently filtered.
+
+**Final corpus state**: 230/520 programs clean (44.2%, up from baseline
+226/43.5%). Remaining structural drops are irreducible:
+- typedefs (74+66): genuinely inexpressible
+- break→flag (63): correct transformation, structure-preserving
+- unexpanded macros (35): `BOARD_LED3_1` etc. — need macro body
+- pointer derefs (9): `*s -= '0'` — genuinely inexpressible
+- array compound ops (8): `key[i] |= val` — need dialect extension
 
 ### 28. /assemble Z80 target (stc-compiler a443ee2)
 
