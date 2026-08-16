@@ -19,7 +19,7 @@
 - generateC ATtiny88: sb3-creator `ddcaac0` — Timer1 CTC tick (Timer0 has no CTC),
   PB/PC/PD/PA pin names, RETARGET_POOLS, SPOKEN pin validation
 - Verified: pseudocode → generateC → avr-gcc attiny88 = 758 bytes
-- **NOT live on Vercel** — rate-limited; GH Pages is the deploy target
+- Verified LIVE on Vercel: `ccde47d`, 17 assemble targets, ATtiny88 compile 222 bytes
 
 **Arduino CC0 campaign (generateC AVR coverage):**
 - tone_set for AVR: Timer2 CTC + ISR pin toggle (sb3-creator `56600ab`)
@@ -67,7 +67,7 @@ deploy with ATtiny88 as the 17th target.
 | item | status | next step |
 |---|---|---|
 | Arduino library support | bare avr/io.h only | separate decision (LGPL-2.1 obligation) |
-| Vercel deploy verification | ATtiny88 not yet live | wait for rate limit to lift |
+| ~~Vercel deploy~~ | DONE — ATtiny88 live at `ccde47d`, 17 targets | verified 2026-08-16 |
 | ~~6502/ATtiny88 round-trip~~ | FIXED (e7956c1 + 3999910) — port-register pin writes reverse-mapped, ISR/sei/cli ignored | 33/33 stable, 30 zero-warn |
 
 ## Milestones — test-backed per fleet doctrine
