@@ -70,6 +70,22 @@ deploy with ATtiny88 as the 17th target.
 | Vercel deploy verification | ATtiny88 not yet live | wait for rate limit to lift |
 | ~~6502/ATtiny88 round-trip~~ | FIXED (e7956c1 + 3999910) — port-register pin writes reverse-mapped, ISR/sei/cli ignored | 33/33 stable, 30 zero-warn |
 
+## Milestones — test-backed per fleet doctrine
+
+Each milestone is a test in the repo suite, not a ledger line:
+- **ATtiny88 compile**: `test_avr_widening.py::TestTiny88` (stc-compiler, 5 tests)
+- **ATtiny88 round-trip**: `ctarget.test.mjs` "ATtiny88 blink round-trips" (sb3-creator)
+- **STC15 round-trip**: `ctarget.test.mjs` "STC15F2K60S2 multi-task round-trips" (sb3-creator)
+- **EATER6502 round-trip**: `ctarget.test.mjs` "EATER6502 blink round-trips" (sb3-creator)
+- **cc65 vendor**: `test_assemble.py::Test6502Assemble` (stc-compiler, 7 tests)
+- **Z80 assemble**: `test_assemble.py::TestZ80Assemble` (stc-compiler, 8 tests)
+- **nRF52833 assemble**: `test_assemble.py::TestArmAssemble` (stc-compiler, 10 tests)
+- **UF2 container**: `test_uf2.py` (stc-compiler, 12 tests)
+- **AVR symbol extraction**: `test_avr_symbols.py` (stc-compiler, 8 tests)
+
+stc-compiler has no `ROADMAP.md` — coordinator: create one if needed,
+or the test suite IS the roadmap (a passing test = a delivered milestone).
+
 ## Round-trip ledger (C → pseudocode → C)
 
 33/33 gallery examples with `@bw-begin` markers round-trip STABLE.
