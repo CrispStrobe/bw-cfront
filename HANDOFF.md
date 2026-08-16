@@ -83,7 +83,8 @@ Each milestone is a test in the repo suite, not a ledger line:
 - **UF2 container**: `test_uf2.py` (stc-compiler, 12 tests)
 - **AVR symbol extraction**: `test_avr_symbols.py` (stc-compiler, 8 tests)
 
-- **Stages payload**: `test_stages.py` (stc-compiler, 21 tests — all 5 chains)
+- **Stages payload**: `test_stages.py` (stc-compiler, 27 tests — all 5 chains)
+- **Device parity**: `test_device_parity.py` (stc-compiler, 17 tests — every device)
 
 stc-compiler has no `ROADMAP.md` — coordinator: create one if needed,
 or the test suite IS the roadmap (a passing test = a delivered milestone).
